@@ -134,7 +134,8 @@ scientist_falling.initialize = function () {
     },
     motor = {
         x : 0,
-        y : -65
+        y : -20,
+        targetY : -20
     },
     motorRotation = 0,
     fingerStartPos = 0,
@@ -292,6 +293,9 @@ scientist_falling.initialize = function () {
             case 'bagel':
                 secretNumber = 16;
             break;
+            case 'scientist':
+                secretNumber = 17;
+            break;
             default :
                 secretNumber = 1;
 
@@ -362,7 +366,8 @@ scientist_falling.initialize = function () {
         queryString = '?mq=',
         i = 0,
         b = 0,
-        g = 0;
+        g = 0,
+        sharing = false;
 
         textMSG = 'Scotee Nano has been permanently transformed into a half ';
 
@@ -408,7 +413,11 @@ scientist_falling.initialize = function () {
                         //?h=15&amp;t=15&amp;fr=4&amp;fl=0&amp;b=4&amp;cr=0&amp;cl=2&amp;th=3&amp;';
 
         function shareOnTwitter () {
-            window.open(twitterString);
+            if(sharing === false) {
+                 window.open(twitterString);
+                 sharing = true;
+            }
+           // window.open(twitterString);
         }
 
         multiverse.eventlistener('click', shareButton, shareOnTwitter);
@@ -524,11 +533,10 @@ scientist_falling.initialize = function () {
 
 
 
-                context.textAlign = 'right';
-
+              /*  context.textAlign = 'right';
                 context.font = "bold 23px arial";
                 context.fillStyle = "rgba(255,255,255, 0.5)";
-                context.fillText(Math.round(scientist[1].body.GetPosition().y), canvaswidth, 200);
+                context.fillText(Math.round(scientist[1].body.GetPosition().y), canvaswidth, 200);*/
 
                 fullBar.style.width = gren.width + 'px';
 
@@ -537,7 +545,7 @@ scientist_falling.initialize = function () {
                 if (percentageofHumanDNA < 0.1 ) {
                     //countdown
                     if(deathCounter > 0 && deathCounter < 6) {
-
+                        context.save();
                         context.strokeStyle = "rgba(39,59,66," + cd.alpha + ")";
                         context.lineWidth = cd.fontSize * 0.03;
                         context.textAlign = 'center';
@@ -554,7 +562,7 @@ scientist_falling.initialize = function () {
 
                         context.textAlign = 'right';
 
-                        
+                        context.restore();
                         }
                     }
 
@@ -684,7 +692,7 @@ scientist_falling.initialize = function () {
             multiverse.eventlistener('load', superArray[nameArray[b]], incrementLoadCount);
             src = 'images/' + prefix + '_' + nameArray[b]+ '.png';
             superArray[nameArray[b]].src = src;
-            obj = objectCreator(superArray[nameArray[b]], 'human');
+            obj = objectCreator(superArray[nameArray[b]], 'scientist');
             obj.isHuman = true;
             superArray[nameArray[b]] = obj;
         }
@@ -824,7 +832,8 @@ scientist_falling.initialize = function () {
         leftKnee,
         tempFilt;
 
-        fixDef.density = 0.01;
+       // fixDef.density = 0.01;
+        fixDef.density = 0.005;
         fixDef.friction = 0.00005;
         fixDef.restitution = 0.4;
         bodyDef.type = b2Body.b2_dynamicBody;
@@ -994,7 +1003,9 @@ scientist_falling.initialize = function () {
         if(scientistYPos < -2000 ) {
             selectGameState('end');
         }
+        motor.y += ((motor.targetY - motor.y) * 0.1);
         anchor.body.ApplyForce(new B2Vec2(motor.x,motor.y), anchor.body.GetWorldCenter() );
+        motor.x *= 0.85;
     }
 
     function updateCamera() {
@@ -1036,7 +1047,7 @@ scientist_falling.initialize = function () {
         var i = 0,
         ln;
 
-        for(i = 0; i < lines.length; i += 1) {
+       /* for(i = 0; i < lines.length; i += 1) {
             ln = lines[i];
             ln.yPos += velocity_Y;
             if(ln.yPos > canvasheight + 10) {
@@ -1046,7 +1057,7 @@ scientist_falling.initialize = function () {
             if(ln.yPos < -10) {
                 ln.yPos += canvasheight + 10;
             }
-        }
+        }*/
     }
 
     function updateGame(){
@@ -1235,7 +1246,16 @@ scientist_falling.initialize = function () {
         context.fillStyle = 'rgba(255,255,255, 0.2)';
         for(i = 0; i < lines.length; i += 1) {
             ln = lines[i];
-            context.fillRect(ln.xPos, ln.yPos, ln.width, 12);
+            if(container.y + (ln.yPos * scale) < canvasheight &&  container.y + (ln.yPos * scale) > 0) {
+                context.fillRect(container.x + (ln.xPos * scale), container.y + (ln.yPos * scale), (ln.width * scale), ln.height);
+                if(ln.text !== null) {
+                    context.textAlign = 'left';
+                    context.font = "bold  42px arial";
+                  //  context
+                    context.fillText(ln.text, (ln.width * scale), container.y + (ln.yPos* scale) + (ln.width * 2));
+                }
+            }
+            //context.fillRect(ln.xPos, ln.yPos, ln.width, 12);
         }
 
     }
@@ -1292,32 +1312,38 @@ scientist_falling.initialize = function () {
         rand,
         yPos = 0;
 
-        yPos =  scientist[1].body.GetPosition().y;
+       //yPos =  scientist[1].body.GetPosition().y;
+       if(amoebas.length < 3) {
+            x = Math.random() * (canvaswidth / scale);
+           // y = yPos + (-(Math.random() * canvasheight * 35) / scale) - ((canvasheight * 2) /scale);
 
-        x = Math.random() * (canvaswidth / scale);
-        y = yPos + (-(Math.random() * canvasheight * 35) / scale) - ((canvasheight * 2) /scale);
+            y = (-container.y / scale) -5;
 
 
-        rad = 40 / scale; //(((Math.random() * 35) + 18) / scale);
-        amoebaFix.shape = new B2CircleShape(rad);
-        //amoebaBod.position.x = (container.x + x) +  x/scale;
-        //amoebaBod.position.y = (container.y + y) + y/scale;
-        amoebaBod.position.x =  x;
-        amoebaBod.position.y =  y;
-        amoebaBod.bullet = true;
+            rad = 40 / scale; //(((Math.random() * 35) + 18) / scale);
+            amoebaFix.shape = new B2CircleShape(rad);
+            //amoebaBod.position.x = (container.x + x) +  x/scale;
+            //amoebaBod.position.y = (container.y + y) + y/scale;
+            amoebaBod.position.x =  x;
+            amoebaBod.position.y =  y;
+            amoebaBod.bullet = true;
 
-        amoeba.body = world.CreateBody(amoebaBod);
-        amoeba.fixture = amoeba.body.CreateFixture(amoebaFix);
-        amoeba.radius = rad;
-        rand = Math.floor(Math.random() * amoebaModels.length );
-        amoeba.image = amoebaModels[rand];
-        amoeba.scaledRadius = bitwise(rad * scale);
-        amoeba.scaledWidth = bitwise((rad *2) * scale);
-        amoeba.isVirus = true;
-        amoeba.body.SetAngularVelocity(Math.random()*8 -4);
-        amoeba.alpha = 1;
-        amoeba.body.parentObj = amoeba;
-        amoebas.push(amoeba);
+            amoeba.body = world.CreateBody(amoebaBod);
+            amoeba.fixture = amoeba.body.CreateFixture(amoebaFix);
+            amoeba.radius = rad;
+            rand = Math.floor(Math.random() * amoebaModels.length );
+            amoeba.image = amoebaModels[rand];
+            amoeba.scaledRadius = bitwise(rad * scale);
+            amoeba.scaledWidth = bitwise((rad *2) * scale);
+            amoeba.isVirus = true;
+            amoeba.body.SetAngularVelocity(Math.random()*8 -4);
+            amoeba.alpha = 1;
+            amoeba.body.parentObj = amoeba;
+            amoebas.push(amoeba);
+       }
+       
+        setTimeout(releaseAmoeba, Math.random()* 1000 + 1000);
+
     }
 
     function releaseDNA () {
@@ -1328,25 +1354,30 @@ scientist_falling.initialize = function () {
         widf = 44,
         hite = 20;
 
-        yPos = scientist[1].body.GetPosition().y;
+        //yPos = scientist[1].body.GetPosition().y;
 
-        x = (Math.random() * canvaswidth) / scale;
-        y = yPos + (-(Math.random() * canvasheight * 35) / scale);
+        if(DNApills.length < 1) {
+            x = (Math.random() * canvaswidth) / scale;
+            //y = yPos + (-(Math.random() * canvasheight * 35) / scale);
+            y = y = (-container.y / scale) -5;
 
 
-        DNAFix.shape = new  B2PolygonShape();
-        DNAFix.shape.SetAsBox(widf/scale,hite/scale);
-        DNABod.position.x = x;
-        DNABod.position.y = y;
-        pill.width = widf;
-        pill.height = hite;
-        pill.body = world.CreateBody(DNABod);
-        pill.body.SetAngularVelocity(Math.random()*8 -4);
-        pill.fix = pill.body.CreateFixture(DNAFix);
-        pill.isDNA = true;
-        pill.image = pillImage;
-        pill.body.parentObj = pill;
-        DNApills.push(pill);
+            DNAFix.shape = new  B2PolygonShape();
+            DNAFix.shape.SetAsBox(widf/scale,hite/scale);
+            DNABod.position.x = x;
+            DNABod.position.y = y;
+            pill.width = widf;
+            pill.height = hite;
+            pill.body = world.CreateBody(DNABod);
+            pill.body.SetAngularVelocity(Math.random()*8 -4);
+            pill.fix = pill.body.CreateFixture(DNAFix);
+            pill.isDNA = true;
+            pill.image = pillImage;
+            pill.body.parentObj = pill;
+            DNApills.push(pill);
+        }
+
+        setTimeout(releaseDNA, Math.random() * 4000 + 4000);
     }
 
 
@@ -1380,7 +1411,7 @@ scientist_falling.initialize = function () {
         dist = Math.sqrt((distX*distX) + (distY * distY));
 
         if(dist > 100 ) {
-            releaseAmoeba(e);
+            //releaseAmoeba(e);
         }
         
     };
@@ -1427,16 +1458,17 @@ scientist_falling.initialize = function () {
     function initKillerAmoebas() {
         var i = 0;
         //upped it to 140, so I could die easier, it was at 80 before.
-        for(i = 0; i < 12; i += 1) {
-            releaseAmoeba();
-        }
+       // for(i = 0; i < 12; i += 1) {
+        setTimeout( releaseAmoeba, 2000);
+        //}
     }
 
     function initPills () {
-        var i = 0;
+       /* var i = 0;
         for(i = 0; i < 16; i += 1) {
-            releaseDNA();
-        }
+          //  releaseDNA();
+        }*/
+        setTimeout(releaseDNA, Math.random()* 4000 + 4000);
     }
 
     function initTinyAmoebas () {
@@ -1479,16 +1511,20 @@ scientist_falling.initialize = function () {
 
     function initLines() {
         var i = 0,
-        ln,
-        ratio = canvasheight / 16;
-        for ( i = 0; i < 16; i += 1) {
+        ln;
+
+        for (i = 0; i <= 100; i += 1) {
             ln = {};
             ln.xPos = 0;
-            ln.yPos = i * ratio;
-            if(i % 8 === 0) {
-                ln.width = 400;
-            } else  {
-                ln.width = 100;
+            ln.yPos = (i * -20);
+            if(i % 5 === 0) {
+                ln.width = 16;
+                ln.height = 12;
+                ln.text = ((ln.yPos + 2000) * 0.1) + 'ml';
+            } else {
+                ln.width = 8;
+                ln.height = 6;
+                ln.text = null;
             }
             lines.push(ln);
         }
@@ -1527,7 +1563,7 @@ scientist_falling.initialize = function () {
     }
 
     function setUpDNA () {
-        DNAFix.density = 0.2;
+        DNAFix.density = 0.001;
         DNAFix.friction = 0;
         DNAFix.restitution = 4;
         DNABod.type = b2Body.b2_dynamicBody;
@@ -1537,12 +1573,12 @@ scientist_falling.initialize = function () {
     function setUpAmoebas() {
         amoebaFix.density = 0.20;
         amoebaFix.friction = 0;
-        amoebaFix.restitution = 4;
+        amoebaFix.restitution = 0.1;
         amoebaBod.type = b2Body.b2_dynamicBody;
         amoebaCreator(amoebaModels, 'main', 5);
         //amoebaCreator(tinyAmoebaModels, 'smallwhite', 4);
         //amoebaCreator(giantAmoebaModels, 'largeOOF', 4);
-        initTinyAmoebas();
+       // initTinyAmoebas();
         initKillerAmoebas();
         //initGiantAmoebas();
     }
@@ -1567,7 +1603,7 @@ scientist_falling.initialize = function () {
         leftWall.fixture = leftWall.body.CreateFixture(tubeWallFix);
 
         tubeWallFix2.shape = new B2PolygonShape();
-        tubeWallFix2.shape.SetAsBox(1/scale, (canvasheight * 200) /scale);
+        tubeWallFix2.shape.SetAsBox(20/scale, (canvasheight * 200) /scale);
         tubeWallDef2.type = b2Body.b2_staticBody;
         tubeWallDef2.position.x = (1) / scale;
         tubeWallDef2.position.y =  1 / scale;
@@ -1629,6 +1665,7 @@ scientist_falling.initialize = function () {
     function humanize () {
         var newLimb,
         limb;
+         flickerCounter = 0;
 
         if(listofMutatedLimbs.length > 0) {
             limb = listofMutatedLimbs[ Math.floor(Math.random() * listofMutatedLimbs.length )];
@@ -1636,6 +1673,7 @@ scientist_falling.initialize = function () {
         } else {
             newLimb = { img : {  width : 0 } };
         }
+        motor.y = -4000;
         switchLimb(limb, newLimb);
     }
 
@@ -1729,7 +1767,13 @@ scientist_falling.initialize = function () {
         }
 
         directionVector = x - fingerStartPos;
-        motor.x = (directionVector * 0.2);
+        motor.x = (directionVector * 0.7);
+      //  motor.x = ((scientist[1].body.GetPosition().x) - (x/scale) * 10);
+        //console.log('scientist is at ' + scientist[1].body.GetPosition().x);
+        //console.log('finger is at ' + (x/scale));
+       // var target =  (scientist[1].body.GetPosition().x) - (x/scale);
+       // console.log('target is ' + target );
+       //// motor.x = -target * 2;
         multiverse.cancelevent(e);
 
     }
