@@ -214,7 +214,7 @@ scientist_falling.initialize = function () {
         shareLander.elem.style.marginLeft = '-3333px';
     }
     function initializeGame () {
-        console.log('initialize game!');
+        //console.log('initialize game!');
         outroObj.elem.style.marginLeft = "-9000px";
         setTimeout(function(){
             // currentTouchFunction = gameTouchFunction;
@@ -227,6 +227,7 @@ scientist_falling.initialize = function () {
         initLines();
         multiverse.eventlistener('touchmove', glarePanel, steer);
         multiverse.eventlistener('touchstart', glarePanel, setFingerPos);
+       // multiverse.eventlistener('touchend', glarePanel, releaseScientist);
         setUpCollisionHandler();
 
         currentTouchFunction = gameTouchFunction;
@@ -346,10 +347,7 @@ scientist_falling.initialize = function () {
         mages = document.getElementsByTagName('img');
 
         for(i = 0; i < body_images.length; i += 1) {
-            //currentMutation =  mutationArray[body_images[i]].name;
             currentMutation = currentBodyImages[body_images[i]].name;
-            //console.log(body_images[i] + ' is a ' + currentMutation);
-
             for(g = 0; g < mages.length; g += 1) {
                 if(mages[g].className === body_images[i]) {
                     mages[g].src = 'images/' + currentMutation + '_' + body_images[i] + '.png';
@@ -371,9 +369,10 @@ scientist_falling.initialize = function () {
         i = 0,
         b = 0,
         g = 0,
-        sharing = false;
+        sharing = false,
+        messageContainer = document.getElementById('end-message');
 
-        textMSG = 'Scotee Nano has been permanently transformed into a half ';
+        //textMSG = 'Scotee Nano has been permanently transformed into a half ';
 
         for(i = 0; i < body_images.length; i += 1){
             queryString += convertLimbToPrefix(body_images[i]);
@@ -391,6 +390,7 @@ scientist_falling.initialize = function () {
         textMSG += ' abomination!';
         //statsObj.elem.innerHTML = 'dude, you finished with a score of ' + score + '!';
         //statsObj.elem.innerHTML = textMSG;
+
         outroObj.elem.style.marginLeft = "0";
         outroObj.targetAlpha = 1;
         outroObj.alpha = 1;
@@ -399,11 +399,25 @@ scientist_falling.initialize = function () {
                 setTimeout(function(){
                     currentResetFunction = workingResetFunction;
                 },600);
-                //multiverse.eventlistener('touchstart', outroObj.elem, reset);
-                //multiverse.eventlistener('click', outroObj.elem, reset);
             });
+
         multiverse.eventlistener('touchstart', resetButton, reset);
         multiverse.eventlistener('click', resetButton, reset);
+
+        //message
+        console.log('percentage of human DNA is ' + percentageofHumanDNA);
+        if(Math.round(percentageofHumanDNA) === 0) {
+            textMSG = 'Oh no! Doctor Nano has been permanently mutated into a horrible freak!<br />' +
+                        'His wife may never find him sexually attractive again!';
+        } else if (Math.round(percentageofHumanDNA* 100) === 100) {
+            textMSG = 'Doctor Nano has made it out of the tube with his DNA completely uncontaminated! ' +
+                        'He is happy, but not very intersting...<br /> Play mad-scientist bonus round and see what' +
+                        ' you can turn him into!';
+        } else {
+            textMSG = 'Doctor Nano made it out of the tube, but his DNA is only ' + (percentageofHumanDNA * 100) +
+                    '% human.<br />Get him out with 100% human DNA to unlock mad-scientist bonus round!';
+        }
+        messageContainer.innerHTML = textMSG;
 
         //twitter parameters
         //text
@@ -417,15 +431,14 @@ scientist_falling.initialize = function () {
                         //?h=15&amp;t=15&amp;fr=4&amp;fl=0&amp;b=4&amp;cr=0&amp;cl=2&amp;th=3&amp;';
 
         function shareOnTwitter () {
-            if(sharing === false) {
-                 window.open(twitterString);
+           if(sharing === false) {
                  sharing = true;
+                 window.open(twitterString);
             }
-           // window.open(twitterString);
         }
 
         multiverse.eventlistener('click', shareButton, shareOnTwitter);
-        multiverse.eventlistener('touchstart', shareButton, shareOnTwitter);
+        multiverse.eventlistener('touchend', shareButton, shareOnTwitter);
     }
 
     selectGameState = function (state) {
@@ -534,14 +547,6 @@ scientist_falling.initialize = function () {
                 var gren = ux.meter.greenbar,
                 tex = ux.meter.textfield,
                 cd = ux.countdown;
-
-
-
-              /*  context.textAlign = 'right';
-                context.font = "bold 23px arial";
-                context.fillStyle = "rgba(255,255,255, 0.5)";
-                context.fillText(Math.round(scientist[1].body.GetPosition().y), canvaswidth, 200);*/
-
                 fullBar.style.width = gren.width + 'px';
 
                 //mutationText.innerHTML = "MUTATION LEVEL " + (percentageofMutantDNA* 100) + '%';
@@ -775,7 +780,7 @@ scientist_falling.initialize = function () {
         a = {},
         tetherJ;
 
-        tetherFix.density = 0.2;
+        tetherFix.density = 0.02;
         tetherFix.friction = 0;
         tetherFix.restitution = 4;
         tetherDef.type = b2Body.b2_dynamicBody;
@@ -799,8 +804,6 @@ scientist_falling.initialize = function () {
         a.vy = 0;
         return a;
     }
-    
-
 
     //making an object takes three things...
     //--fixture definition
@@ -837,9 +840,9 @@ scientist_falling.initialize = function () {
         tempFilt;
 
        // fixDef.density = 0.01;
-        fixDef.density = 0.005;
+        fixDef.density = 0.0005;
         fixDef.friction = 0.00005;
-        fixDef.restitution = 0.4;
+        fixDef.restitution = 0.04;
         bodyDef.type = b2Body.b2_dynamicBody;
 
         frankenstein = drFrankenstein(bodyDef, fixDef, s, centX, centY);
@@ -885,7 +888,7 @@ scientist_falling.initialize = function () {
         leftElbow = fusion(leftArm.body, leftForeArm.body, -26, 26, -1, 2);
         rightKnee = fusion(rightThigh.body, rightCalf.body, 10, 70, -1, 1);
         leftKnee = fusion(leftThigh.body, leftCalf.body, -16, 74, -1, 1); //his right
-        anchor = tether(head.body, centX, centY-60, 24, s);
+        anchor = tether(head.body, centX, centY-60, 4, s);
     }
 
     /*var debugDraw = new B2DebugDraw();
@@ -977,11 +980,6 @@ scientist_falling.initialize = function () {
                 //console.log('remove');
             }
 
-            /*if(xPos < -40 || xPos > canvaswidth + 40) {
-                world.DestroyBody(waste.body);
-                ray.splice(a,1);
-            }*/
-
         }
     }
 
@@ -1010,16 +1008,18 @@ scientist_falling.initialize = function () {
         }
         motor.y += ((motor.targetY - motor.y) * 0.1);
         anchor.body.ApplyForce(new B2Vec2(motor.x,motor.y), anchor.body.GetWorldCenter() );
-        motor.x *= 0.85;
+        //anchor.body.ApplyImpulse( new B2Vec2(motor.x, 0), anchor.body.GetWorldCenter() );
+        //console.log('motor.x is ' + motor.x);
+        motor.x *= 0.92;
     }
 
     function updateCamera() {
         var scientistXPos = scientist[1].body.GetPosition().x,
         scientistYPos = scientist[1].body.GetPosition().y,
         targetY = 0;
-        targetY = (-scientistYPos * scale) + (canvasheight * 0.8);
+        targetY = (-scientistYPos * scale) + (canvasheight * 0.85);
 
-        container.y = container.y + ((targetY - container.y) * 0.1);
+        container.y = container.y + ((targetY - container.y) * 0.14);
         //container.x = (-scientistXPos * scale) + canvaswidth * 0.5;
 
         velocity_Y = oldY - (scientistYPos * scale);
@@ -1051,24 +1051,12 @@ scientist_falling.initialize = function () {
     function updateLines () {
         var i = 0,
         ln;
-
-       /* for(i = 0; i < lines.length; i += 1) {
-            ln = lines[i];
-            ln.yPos += velocity_Y;
-            if(ln.yPos > canvasheight + 10) {
-                ln.yPos -= canvasheight + 10;
-            }
-
-            if(ln.yPos < -10) {
-                ln.yPos += canvasheight + 10;
-            }
-        }*/
     }
 
     function updateGame(){
         var timeDelta = (new Date() - oldDate),
         fps = bitwise(1000/ timeDelta);
-        console.log('game is running at ' + fps + ' frames per second');
+       // console.log('game is running at ' + fps + ' frames per second');
         oldDate = new Date();
         if(fps <= 0) {
             fps = 15;
@@ -1765,7 +1753,9 @@ scientist_falling.initialize = function () {
         x = 0,
         y = 0,
         directionVector = 0,
-        rotations;
+        rotations,
+        xPos = 0,
+        yPos = 0;
 
         if(e.touches !== undefined) {
             x = e.touches[0].pageX;
@@ -1776,14 +1766,18 @@ scientist_falling.initialize = function () {
         }
 
         directionVector = x - fingerStartPos;
-        motor.x = (directionVector * 1.5);
+        //xPos = scientist[1].body.GetPosition().x;
+        yPos = scientist[1].body.GetPosition().y;
+        anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
+        motor.x = (directionVector * 0.1);
+        //scientist[1].body.x = (x / scale);
         //motor.x = x - (canvaswidth * 0.5);
       //  motor.x = ((scientist[1].body.GetPosition().x) - (x/scale) * 10);
         //console.log('scientist is at ' + scientist[1].body.GetPosition().x);
         //console.log('finger is at ' + (x/scale));
-       // var target =  (scientist[1].body.GetPosition().x) - (x/scale);
+        //var target =  (scientist[1].body.GetPosition().x) - (x/scale);
        // console.log('target is ' + target );
-       //// motor.x = -target * 2;
+        //motor.x = -target * 2;
         multiverse.cancelevent(e);
 
     }
@@ -1799,6 +1793,24 @@ scientist_falling.initialize = function () {
         
         fingerStartPos = xPos;
         multiverse.cancelevent(e);
+    }
+
+    function releaseScientist (evt) {
+        console.log('hey');
+        var e = evt || window.event,
+        x = 0,
+        directionVector = 0;
+
+        //if(e.touches !== undefined) {
+           // x = e.touches[0].pageX;
+        //} else if (e.pageX !== undefined) {
+            x = e.pageX;
+       // }
+
+      //  directionVector = x - fingerStartPos;
+       // motor.x = -(directionVector * 0.1);
+       // console.log('release him!');
+
     }
 
     function allSystemsGo(game) {
@@ -1893,10 +1905,6 @@ scientist_falling.initialize = function () {
         }
     }
 
-
-    //initialize world
-    //world = new B2World( new B2Vec2(0,0)/*gravity*/ , false/*allow sleep*/);
-
     loadManager(tankImg, "images/tank.png");
     loadManager(bubbleImg, "images/bubble.png");
     loadManager(pillImage, "images/DNAPill.png", "dna");
@@ -1919,8 +1927,6 @@ scientist_falling.initialize = function () {
     mutantParts(['chicken', 'skeleton', 'bodybuilder', 'burlesque'], 'thigh');
     mutantParts(['chicken', 'skeleton', 'octopus', 'bodybuilder'], 'bicep');
 
-    
-    
     scientistBody = superCreator(body_images, 'scientist', function(){
         scientistLoaded = true;
         makeScientistMutant();
