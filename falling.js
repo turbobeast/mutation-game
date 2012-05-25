@@ -51,7 +51,6 @@ scientist_falling.initialize = function () {
     introObj = {}, // = document.getElementById('intro'),
     outroObj = {},
     shareLander = {},
-    //statsObj = {},
     scientist = [],
     amoebas = [],
     amoebaFix = new B2FixtureDef(),
@@ -60,7 +59,6 @@ scientist_falling.initialize = function () {
     DNABod = new B2BodyDef(),
     tankImg = new Image(),
     bubbleImg = new Image(),
-    assetsLoaded = 0,
     totalAssets = 0,
     torso = {},
     amoebaModels = [],
@@ -96,6 +94,14 @@ scientist_falling.initialize = function () {
     introLoop = function(){},
     endLoop = function(){},
     madScienceLoop = function() {},
+    currentResetFunction = function(){},
+    brokenResetFunction = function(){},
+    tryAgainFunction = function(){},
+    tryMadScientistFunction = function () {},
+    currentTouchStartFunction = function() {},
+    currentTouchMoveFunction = function () {},
+    currentAcceleromterFunction = function () {},
+    selectGameState = function(){},
     oldState = '',
     ui = {},
     iOSVersion = 0,
@@ -104,31 +110,23 @@ scientist_falling.initialize = function () {
     countDownStarted = false,
     countDownStartTime,
     reset = {},
-    currentResetFunction = function(){},
-    brokenResetFunction = function(){},
-    tryAgainFunction = function(){},
-    tryMadScientistFunction = function () {},
-    currentTouchStartFunction = function() {},
-    currentTouchMoveFunction = function () {},
-    currentAcceleromterFunction = function () {},
     particles = [],
     DNApills = [],
     pillImage = new Image(),
     fullBar = document.getElementById('full-bar'),
     emptyBar = document.getElementById('empty-bar'),
-    selectGameState = {},
     mutationText = document.getElementById('mutation-text'),
-    oldDate = new Date(),
-    manlyAlpha = 1,
-    flickerCounter = 0,
     resetButton = document.getElementById('playagain'),
     glarePanel = document.getElementById('glare'),
-    skeletons= {},
-    preSchool = true,
-    instructions = {},
     startGameButton1 = document.getElementById('begin-experiment'),
     startGameButton2 = document.getElementById('begin-experiment-2'),
     shareButton = document.getElementById('share'),
+    oldDate = new Date(),
+    manlyAlpha = 1,
+    flickerCounter = 0,
+    skeletons= {},
+    preSchool = true,
+    instructions = {},
     container = {
         x : 0,
         y : -2000
@@ -178,15 +176,6 @@ scientist_falling.initialize = function () {
         return bo;
     }
 
-    /*iOSVersion = (function() {
-        var version = navigator.userAgent.match('iPod') || navigator.userAgent.match('iPhone') ? 1.0 : 0;
-        if (match = /iPhone OS (.*) like Mac OS X/.exec(navigator.userAgent)) {
-            version = parseInt(match[1].replace('_', ''), 10) / 100;
-            if (version < 1) { version *= 10; }
-        }
-        return version;
-    }());*/
-
     function initializeIntro () {
         var startGame = {};
         //introObj.targetAlpha = 1;
@@ -212,7 +201,6 @@ scientist_falling.initialize = function () {
             multiverse.eventlistener('click', startGameButton1, startGame);
             shareLander.elem.style.marginLeft = '-9000px';
         }
-
     }
 
     function cleanUpIntroGarbage() {
@@ -275,66 +263,9 @@ scientist_falling.initialize = function () {
     }
 
     function convertMutationToSecretNumber(mutationName) {
-        var secretNumber = 0;
-        switch(mutationName) {
-            case 'chicken':
-                secretNumber = 0;
-            break;
-            case 'skeleton':
-                secretNumber = 1;
-            break;
-            case 'bodybuilder':
-                secretNumber = 2;
-            break;
-            case 'burlesque':
-                secretNumber = 3;
-            break;
-            case 'octopus':
-                secretNumber = 4;
-            break;
-            case 'duck':
-                secretNumber = 5;
-            break;
-            case 'vanillaice':
-                secretNumber = 6;
-            break;
-            case 'poop':
-                secretNumber = 7;
-            break;
-            case 'cyclops':
-                secretNumber = 8;
-            break;
-            case 'macaroni':
-                secretNumber = 9;
-            break;
-            case 'computer':
-                secretNumber = 10;
-            break;
-            case 'ninja':
-                secretNumber = 11;
-            break;
-            case 'meta':
-                secretNumber = 12;
-            break;
-            case 'girl':
-                secretNumber = 13;
-            break;
-            case 'lumberjack':
-                secretNumber = 14;
-            break;
-            case 'robot':
-                secretNumber = 15;
-            break;
-            case 'bagel':
-                secretNumber = 16;
-            break;
-            case 'scientist':
-                secretNumber = 17;
-            break;
-            default :
-                secretNumber = 1;
-
-        }
+        var secretNumber = 0,
+        mutationsArray = ['chicken','skeleton','bodybuilder','burlesque','octopus','duck','vanillaice','poop','cyclops','macaroni','computer','ninja','meta','girl','lumberjack','robot','bagel','scientist'];
+        secretNumber = mutationsArray.indexOf(mutationName);
         return secretNumber;
     }
 
@@ -384,7 +315,6 @@ scientist_falling.initialize = function () {
                 }
             }
         }
-
     }
 
     function initializeEnd () {
@@ -392,7 +322,6 @@ scientist_falling.initialize = function () {
         queryString = '?mq=',
         i = 0,
         messageContainer = document.getElementById('end-message');
-
         //textMSG = 'Scotee Nano has been permanently transformed into a half ';
 
         for(i = 0; i < body_images.length; i += 1){
@@ -402,15 +331,12 @@ scientist_falling.initialize = function () {
             if(i < (body_images.length-1)) {
                 queryString += '*';
             }
-            //queryString += '*';
         }
 
         mutateDiagramImage();
 
         textMSG = textMSG.slice(0, (textMSG.length-1));
         textMSG += ' abomination!';
-        //statsObj.elem.innerHTML = 'dude, you finished with a score of ' + score + '!';
-        //statsObj.elem.innerHTML = textMSG;
 
         outroObj.elem.style.marginLeft = "0";
         outroObj.targetAlpha = 1;
@@ -529,11 +455,6 @@ scientist_falling.initialize = function () {
                 targetMeterLevel = meterWidth * percentageofMutantDNA;
                 currentMeterLevel += (targetMeterLevel - currentMeterLevel) * 0.1;
                 ux.meter.greenbar.width = currentMeterLevel;
-
-                /* if(percentageofHumanDNA > 0 ) {
-
-                } else */
-
                 if (percentageofMutantDNA > 0 ) {
                     if(deathCounter !== oldCount) {
                         countDownFontSize = 524;
@@ -678,7 +599,6 @@ scientist_falling.initialize = function () {
         DO.setCallback = function (f) {
             cBack = f;
         };
-
         return DO;
     }
 
@@ -718,15 +638,7 @@ scientist_falling.initialize = function () {
             obj.isHuman = true;
             superArray[nameArray[b]] = obj;
         }
-
         return superArray;
-    }
-
-    function loadHandler () {
-        assetsLoaded += 1;
-        /*if( assetsLoaded === totalAssets ) {
-            //allSystemsGo();
-        } */
     }
 
     function loadManager( img , src, nam) {
@@ -736,8 +648,6 @@ scientist_falling.initialize = function () {
         if(naim !== null) {
             img.name = naim;
         }
-
-        multiverse.eventlistener('load', img, loadHandler);
     }
 
     function drFrankenstein (d,f,cX,cY) {
@@ -793,9 +703,6 @@ scientist_falling.initialize = function () {
         a = {},
         tetherJ;
 
-        /*tetherFix.density = 0.02;
-        tetherFix.friction = 0;
-        tetherFix.restitution = 4;*/
         if(dynamic === true) {
             tetherFix.density = 0.02;
             tetherFix.friction = 0;
@@ -805,20 +712,16 @@ scientist_falling.initialize = function () {
              tetherDef.type = b2Body.b2_staticBody;
          }
        
-
-        //tetherDef.type = b2Body.b2_staticBody;
         tetherFix.shape = new B2CircleShape(0);
         tempFilt =  tetherFix.filter;
         tempFilt.categoryBits = 2;
         tempFilt.maskBits = 2;
         tetherFix.filter = tempFilt;
-        ///tetherFix.SetFilterData();
         tetherDef.position.x = (xPos) / scale;
         tetherDef.position.y = yPos / scale;
         a.body = world.CreateBody(tetherDef);
         a.fixture = a.body.CreateFixture(tetherFix);
         tetherJ = new B2DistanceJointDef();
-        //tetherJ = new B2RevoluteJointDef();
         tetherJ.Initialize(a.body, bod, new B2Vec2((xPos)/scale, (yPos+dist)/scale), new B2Vec2((xPos)/scale, yPos/scale));
         world.CreateJoint(tetherJ);
         a.vx = 0;
@@ -863,10 +766,6 @@ scientist_falling.initialize = function () {
         fixDef.friction = 0.00005;
         fixDef.restitution = 0.04;
 
-        /*fixDef.density = 0.5;
-        fixDef.friction = 0.5;
-        fixDef.restitution = 0.4*/
-
         bodyDef.type = b2Body.b2_dynamicBody;
 
         frankenstein = drFrankenstein(bodyDef, fixDef, centX, centY);
@@ -880,15 +779,12 @@ scientist_falling.initialize = function () {
         rightThigh = frankenstein(9, 53, 9, 16, 'thigh');
         leftThigh = frankenstein(-14, 53, 9, 16, 'thigh' );
 
-        //rightForeArm = frankenstein(24, 49, 10, 22, 'forearm_right');
-        //leftForeArm = frankenstein(-28, 49, 10, 22, 'forearm_left');
-
         rightCalf = frankenstein(10, 91, 11, 20, 'calf_left');
         leftCalf = frankenstein(-18, 90, 11, 20, 'calf_right');//his right
 
         rightForeArm = frankenstein(24, 49, 10, 22, 'forearm_right');
-
         leftForeArm = frankenstein(-24, 49, 10, 22, 'forearm_left');
+
         head = frankenstein(3, -70, 24, 32, 'head');
 
         tempFilt = rightForeArm.fixture.GetFilterData();
@@ -912,16 +808,7 @@ scientist_falling.initialize = function () {
         leftElbow = fusion(leftArm.body, leftForeArm.body, -26, 26, -1, 2);
         rightKnee = fusion(rightThigh.body, rightCalf.body, 10, 70, -1, 1);
         leftKnee = fusion(leftThigh.body, leftCalf.body, -16, 74, -1, 1); //his right
-        //anchor = tether(head.body, centX, centY-60, 4, s);
     }
-
-    /*var debugDraw = new B2DebugDraw();
-    debugDraw.SetSprite(context);
-    debugDraw.SetDrawScale(scale);
-    debugDraw.SetFillAlpha(0.3);
-    debugDraw.SetLineThickness(1.0);
-    debugDraw.SetFlags(B2DebugDraw.e_shapeBit | B2DebugDraw.e_jointBit);
-    world.SetDebugDraw(debugDraw);*/
 
     animFrame = (function(){
           return  window.requestAnimationFrame       ||
@@ -986,9 +873,7 @@ scientist_falling.initialize = function () {
             if(( yPos > canvasheight - container.y) || waste.destroy === true) {
                 world.DestroyBody(waste.body);
                 ray.splice(a,1);
-                //console.log('remove');
             }
-
         }
     }
 
@@ -1007,12 +892,10 @@ scientist_falling.initialize = function () {
                 world.DestroyBody(waste.body);
                 ray.splice(a,1);
             }
-
         }
     }
 
     function updateaManlyOpacity () {
-
         if(flickerCounter < 8 ) {
 
             if(flickerCounter % 4 === 0 ) {
@@ -1026,14 +909,11 @@ scientist_falling.initialize = function () {
             fickerCounter = 20;
             manlyAlpha = 1;
         }
-        
     }
 
     function updateZoom() {
         motor.y += ((motor.targetY - motor.y) * 0.1);
         anchor.body.ApplyForce(new B2Vec2(motor.x,motor.y), anchor.body.GetWorldCenter() );
-        //anchor.body.ApplyImpulse( new B2Vec2(motor.x, 0), anchor.body.GetWorldCenter() );
-        //console.log('motor.x is ' + motor.x);
         motor.x *= 0.92;
     }
 
@@ -1041,13 +921,8 @@ scientist_falling.initialize = function () {
         var scientistXPos = scientist[1].body.GetPosition().x,
         scientistYPos = scientist[1].body.GetPosition().y,
         targetY = 0;
-        //targetY = (-scientistYPos * scale) + (canvasheight * 0.85);
         targetY = (-scientistYPos * scale) + cameraTarget;
-        //targetY = (-scientistYPos * scale) + (canvasheight * 0.5);
-
         container.y = container.y + ((targetY - container.y) * 0.14);
-        //container.x = (-scientistXPos * scale) + canvaswidth * 0.5;
-
         velocity_Y = oldY - (scientistYPos * scale);
         oldY = scientistYPos * scale;
     }
@@ -1071,7 +946,6 @@ scientist_falling.initialize = function () {
                 bubbles.splice(i,1);
             }
         }
-
     }
 
     function checkifScientistisOutofTube () {
@@ -1169,8 +1043,6 @@ scientist_falling.initialize = function () {
             context.rotate(limb.body.GetAngle());
             
             img = currentBodyImages[limb.name].img;
-            //widd = limb.width * superscale;
-            ///hidd = limb.height * superscale;
             context.drawImage(img,
                                 -limb.scaledWidth,
                                 -limb.scaledHeight,
@@ -1185,17 +1057,13 @@ scientist_falling.initialize = function () {
         context.rotate(torso.body.GetAngle());
         context.drawImage(bubbleImg, superbubble.x, superbubble.y, superbubble.width, superbubble.height);
         context.restore();
-        //console.log('hey');
     }
 
 
     function renderAmoebas() {
         var a = 0, meeb = {};
         for(a = 0; a < amoebas.length; a += 1) {
-
             meeb = amoebas[a];
-
-        
             context.save();
             context.setTransform(1,0,0,1,0,0);
             context.translate( (meeb.body.GetPosition().x) * scale,
@@ -1209,7 +1077,6 @@ scientist_falling.initialize = function () {
                                 meeb.scaledWidth,
                                 meeb.scaledWidth);
             context.restore();
-            
         }
     }
 
@@ -1304,7 +1171,6 @@ scientist_falling.initialize = function () {
                     context.fillText(ln.text, (ln.width * scale), container.y + (ln.yPos* scale) + (ln.width * 2));
                 }
             }
-            //context.fillRect(ln.xPos, ln.yPos, ln.width, 12);
         }
 
     }
@@ -1318,13 +1184,9 @@ scientist_falling.initialize = function () {
         //renderBubbles();
         renderScientist();
         renderAmoebas();
-        //world.DrawDebugData();
         renderDNA();
         ui.render();
         renderLines();
-        /*if(preSchool === true) {
-        //  instructions.render();
-        }*/
     }
 
     introLoop = function() {
@@ -1390,10 +1252,8 @@ scientist_falling.initialize = function () {
         var amoeba = {},
         rand;
 
-        rad = 40 / scale; //(((Math.random() * 35) + 18) / scale);
+        rad = 40 / scale;
         amoebaFix.shape = new B2CircleShape(rad);
-        //amoebaBod.position.x = (container.x + x) +  x/scale;
-        //amoebaBod.position.y = (container.y + y) + y/scale;
         amoebaBod.position.x =  x;
         amoebaBod.position.y =  y;
         amoebaBod.bullet = true;
@@ -1478,12 +1338,6 @@ scientist_falling.initialize = function () {
         dnaTimer = setTimeout(releaseDNA, Math.random() * 4000 + 4000);
     }
 
-    /*function clickRelay (evt) {
-        var e = evt || window.event;
-        multiverse.cancelevent(e);
-        currentTouchFunction(e);
-    }*/
-
     function touchStartRelay (evt) {
         var e = evt || window.event;
         multiverse.cancelevent(e);
@@ -1499,14 +1353,12 @@ scientist_falling.initialize = function () {
     function sizeCanvas (ww,hh) {
         var outerWidth = ww || window.innerWidth,
         outerHeight = hh || window.innerHeight;
-        //contaDiv = document.getElementById('wrap');
 
         canvaswidth = bitwise(outerWidth);
         canvasheight = bitwise(outerHeight - 10);
 
         canvas.height = canvasheight;
         canvas.width = canvaswidth;
-
     }
 
     function resizeCanvas (ww,hh) {
@@ -1592,24 +1444,14 @@ scientist_falling.initialize = function () {
         DNAFix.friction = 0;
         DNAFix.restitution = 4;
         DNABod.type = b2Body.b2_dynamicBody;
-        //dnaTimer = setTimeout(releaseDNA, Math.random()* 4000 + 4000);
-        //initPills();
     }
 
     function setUpAmoebas() {
-        //amoebaFix.density = 0.20;
         amoebaFix.density = 1;
         amoebaFix.friction = 0;
-        //amoebaFix.restitution = 0.1;
         amoebaFix.restitution = 1;
         amoebaBod.type = b2Body.b2_dynamicBody;
         amoebaCreator(amoebaModels, 'main', 5);
-        //amoebaCreator(tinyAmoebaModels, 'smallwhite', 4);
-        //amoebaCreator(giantAmoebaModels, 'largeOOF', 4);
-       // initTinyAmoebas();
-        //amoebaTimer = setTimeout(createRandomAmoeba, 2000);
-        //initKillerAmoebas();
-        //initGiantAmoebas();
     }
 
     function setUpTube () {
@@ -1774,20 +1616,10 @@ scientist_falling.initialize = function () {
         }
 
         directionVector = x - fingerStartPos;
-        //xPos = scientist[1].body.GetPosition().x;
         yPos = scientist[1].body.GetPosition().y;
         anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
         motor.x = (directionVector * 0.1);
-        //scientist[1].body.x = (x / scale);
-        //motor.x = x - (canvaswidth * 0.5);
-      //  motor.x = ((scientist[1].body.GetPosition().x) - (x/scale) * 10);
-        //console.log('scientist is at ' + scientist[1].body.GetPosition().x);
-        //console.log('finger is at ' + (x/scale));
-        //var target =  (scientist[1].body.GetPosition().x) - (x/scale);
-       // console.log('target is ' + target );
-        //motor.x = -target * 2;
         multiverse.cancelevent(e);
-
     }
 
     function setFingerPos (evt) {
@@ -1813,7 +1645,7 @@ scientist_falling.initialize = function () {
         //event listeners... add once!
         multiverse.eventlistener('touchmove', glarePanel, touchMoveRelay);
         multiverse.eventlistener('touchstart', glarePanel, touchStartRelay);
-        multiverse.eventlistener('click', shareButton, shareOnTwitter);
+        //multiverse.eventlistener('click', shareButton, shareOnTwitter);
         multiverse.eventlistener('touchend', shareButton, shareOnTwitter);
         multiverse.eventlistener('touchstart', resetButton, reset);
         multiverse.eventlistener('click', resetButton, reset);
@@ -1907,7 +1739,6 @@ scientist_falling.initialize = function () {
         for(i = 0; i < body_images.length; i += 1) {
             humanities[body_images[i]].push( scientistBody[body_images[i]] );
         }
-        
     }
 
     loadManager(tankImg, "images/tank.png");
@@ -1916,12 +1747,10 @@ scientist_falling.initialize = function () {
 
     humanities = bodyObject();
     mutations = bodyObject();
-    //skeletons = bodyObject();
 
     introObj = domObject('intro');
     shareLander = domObject('share-lander');
     outroObj = domObject('outro');
-    //statsObj = domObject('stats');
 
     mutantParts(['skeleton', 'chicken', 'octopus', 'bodybuilder'], 'forearm_left');
     mutantParts(['chicken', 'skeleton', 'octopus', 'bodybuilder'], 'forearm_right');
@@ -1938,8 +1767,6 @@ scientist_falling.initialize = function () {
         currentBodyImages = scientistBody;
         allSystemsGo();
     });
-
 };
-
 
 multiverse.eventlistener('load', window, scientist_falling.initialize);
