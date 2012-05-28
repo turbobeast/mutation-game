@@ -113,6 +113,8 @@ scientist_falling.initialize = function () {
     particles = [],
     DNApills = [],
     pillImage = new Image(),
+    superPillImg = new Image(),
+    ebolaImg = new Image(),
     fullBar = document.getElementById('full-bar'),
     emptyBar = document.getElementById('empty-bar'),
     mutationText = document.getElementById('mutation-text'),
@@ -157,7 +159,8 @@ scientist_falling.initialize = function () {
     dnaTimer,
     twitterString = '',
     shareOnTwitter,
-    cameraTarget = 0;
+    cameraTarget = 0,
+    killerReleased = false;
 
     shareOnTwitter = function() {
         window.open(twitterString);
@@ -220,6 +223,10 @@ scientist_falling.initialize = function () {
         setUpAmoebas();
         //start random firing of Amoebas
         amoebaTimer = setTimeout(createRandomAmoeba, 2000);
+
+        killerReleased = false;
+
+        //setTimeout(releaseEbola, Math.random() * 14000 + 4000);
         setUpTube();
         initLines();
 
@@ -299,7 +306,6 @@ scientist_falling.initialize = function () {
 
         }
         return prefix;
-
     }
 
     function mutateDiagramImage () {
@@ -883,7 +889,7 @@ scientist_falling.initialize = function () {
             waste = ray[a];
             yPos = (waste.body.GetPosition().y * scale);
             xPos = (waste.body.GetPosition().x * scale);
-            if((yPos < 0 || yPos > canvasheight) || waste.destroy === true) {
+            if((yPos < 0 || yPos > canvasheight - container.y) || waste.destroy === true) {
                 world.DestroyBody(waste.body);
                 ray.splice(a,1);
             }
@@ -952,6 +958,12 @@ scientist_falling.initialize = function () {
         var scientistYPos = scientist[1].body.GetPosition().y;
         if(scientistYPos < -2000 ) {
             selectGameState('end');
+        }
+        if(killerReleased === false) {
+            if(scientistYPos < -1000) {
+                killerReleased = true;
+                releaseEbola();
+            }
         }
     }
 
@@ -1248,12 +1260,10 @@ scientist_falling.initialize = function () {
         }
     }
 
-    function releaseAmoeba (x,y) {
+    function createAmoeba (x,y) {
         var amoeba = {},
-        rand;
+        rad = 40/scale;
 
-        rad = 40 / scale;
-        amoebaFix.shape = new B2CircleShape(rad);
         amoebaBod.position.x =  x;
         amoebaBod.position.y =  y;
         amoebaBod.bullet = true;
@@ -1261,81 +1271,109 @@ scientist_falling.initialize = function () {
         amoeba.body = world.CreateBody(amoebaBod);
         amoeba.fixture = amoeba.body.CreateFixture(amoebaFix);
         amoeba.radius = rad;
-        rand = Math.floor(Math.random() * amoebaModels.length );
-        amoeba.image = amoebaModels[rand];
         amoeba.scaledRadius = bitwise(rad * scale);
         amoeba.scaledWidth = bitwise((rad *2) * scale);
-        amoeba.isVirus = true;
         amoeba.body.SetAngularVelocity(Math.random()*8 -4);
         amoeba.alpha = 1;
         amoeba.body.parentObj = amoeba;
+        return amoeba;
+    }
+
+    function releaseAmoeba (x,y) {
+        var amoeba = {},
+        rand;
+        amoeba = createAmoeba(x,y);
+        amoeba.isVirus = true;
+        rand = Math.floor(Math.random() * amoebaModels.length );
+        amoeba.image = amoebaModels[rand];
+       //amoeba.image = ebolaImg;
         amoebas.push(amoeba);
+    }
+
+    function releaseEbola () {
+        var virus,
+        x = 0,
+        y = 0;
+        x = Math.random() * (canvaswidth / scale);
+        y = (-container.y / scale) -5;
+        virus = createAmoeba(x,y);
+        virus.isEbola = true;
+        virus.image = ebolaImg;
+        amoebas.push(virus);
+       
     }
 
     function fireDNA () {
         var xPos,
         yPos,
         pill = {},
-        widf = 44,
-        hite = 20,
         vx = 0,
         vy = 0,
         scientistYPos = 0,
         scientistXPos = 0;
 
-        scientistXPos = scientist[1].body.GetPosition().x;
-        scientistYPos = scientist[1].body.GetPosition().y;
-        xPos = (Math.random() * canvaswidth) / scale;
-        yPos = (canvasheight) / scale;
-        vx = (scientistXPos - xPos) * 10;
-        vy = (scientistYPos - yPos) * 10;
-        DNAFix.shape = new  B2PolygonShape();
-        DNAFix.shape.SetAsBox(widf/scale,hite/scale);
-        DNABod.position.x = xPos;
-        DNABod.position.y = yPos;
+        if(percentageofHumanDNA > 0) {
+            scientistXPos = scientist[1].body.GetPosition().x;
+            scientistYPos = scientist[1].body.GetPosition().y;
+            xPos = (Math.random() * canvaswidth) / scale;
+            yPos = (canvasheight) / scale;
+            vx = (scientistXPos - xPos) * 10;
+            vy = (scientistYPos - yPos) * 10;
+            pill = makePill(xPos,yPos);
+            pill.isDNA = true;
+            pill.image = pillImage;
+            pill.body.ApplyImpulse(new B2Vec2(vx,vy), pill.body.GetWorldCenter() );
+            DNApills.push(pill);
+
+        }
+
+        dnaTimer = setTimeout(fireDNA, Math.random() * 4000 + 4000);
+    }
+
+    function makePill (x,y) {
+        var pill = {},
+        widf = 44,
+        hite = 20;
+        DNABod.position.x = x;
+        DNABod.position.y = y;
         pill.width = widf;
         pill.height = hite;
         pill.body = world.CreateBody(DNABod);
         pill.body.SetAngularVelocity(Math.random()*16 -8);
         pill.fix = pill.body.CreateFixture(DNAFix);
-        pill.isDNA = true;
-        pill.image = pillImage;
         pill.body.parentObj = pill;
-        pill.body.ApplyImpulse(new B2Vec2(vx,vy), pill.body.GetWorldCenter() );
-        DNApills.push(pill);
-
-         dnaTimer = setTimeout(fireDNA, Math.random() * 4000 + 4000);
+        return pill;
     }
 
     function releaseDNA () {
         var x = 0,
         y = 0,
-        pill = {},
-        widf = 44,
-        hite = 20;
-
-        //yPos = scientist[1].body.GetPosition().y;
+        pill = {};
 
         if(DNApills.length < 1) {
             x = (Math.random() * canvaswidth) / scale;
-            //y = yPos + (-(Math.random() * canvasheight * 35) / scale);
-            y = y = (-container.y / scale) -5;
-            DNAFix.shape = new  B2PolygonShape();
-            DNAFix.shape.SetAsBox(widf/scale,hite/scale);
-            DNABod.position.x = x;
-            DNABod.position.y = y;
-            pill.width = widf;
-            pill.height = hite;
-            pill.body = world.CreateBody(DNABod);
-            pill.body.SetAngularVelocity(Math.random()*8 -4);
-            pill.fix = pill.body.CreateFixture(DNAFix);
+            y = (-container.y / scale) -5;
+            pill = makePill(x,y);
             pill.isDNA = true;
             pill.image = pillImage;
-            pill.body.parentObj = pill;
             DNApills.push(pill);
         }
 
         dnaTimer = setTimeout(releaseDNA, Math.random() * 4000 + 4000);
+    }
+
+    function releaseSuperPill () {
+        var x = 0,
+        y = 0,
+        pill;
+
+        x = (Math.random() * canvaswidth) / scale;
+        y = (-container.y / scale);
+        pill = makePill(x,y);
+        pill.isSuperPill = true;
+        pill.image = superPillImg;
+        DNApills.push(pill);
+
     }
 
     function touchStartRelay (evt) {
@@ -1443,6 +1481,8 @@ scientist_falling.initialize = function () {
         DNAFix.density = 0.001;
         DNAFix.friction = 0;
         DNAFix.restitution = 4;
+        DNAFix.shape = new  B2PolygonShape();
+        DNAFix.shape.SetAsBox(44/scale,20/scale);
         DNABod.type = b2Body.b2_dynamicBody;
     }
 
@@ -1450,6 +1490,7 @@ scientist_falling.initialize = function () {
         amoebaFix.density = 1;
         amoebaFix.friction = 0;
         amoebaFix.restitution = 1;
+        amoebaFix.shape = new B2CircleShape(40/scale);
         amoebaBod.type = b2Body.b2_dynamicBody;
         amoebaCreator(amoebaModels, 'main', 5);
     }
@@ -1505,26 +1546,39 @@ scientist_falling.initialize = function () {
         } else {
             return false;
         }
+        flickerCounter = 0;
     }
 
     function dehumanize () {
         var limb,
         randLimb,
         newLimb;
-        flickerCounter = 0;
         limb = body_images[ Math.floor(Math.random() * body_images.length )];
         randLimb = Math.floor( Math.random() * mutations[limb].length );
         newLimb = mutations[limb][randLimb];
         switchLimb(limb, newLimb);
-        if(preSchool === true) {
+       /*if(preSchool === true) {
             preSchool = false;
+        } */
+    }
+
+    function fullMutation () {
+        var limbname,
+        i = 0,
+        mutation,
+        randomSelection = 0;
+
+        for(i = 0; i < body_images.length; i+= 1) {
+            limbname = body_images[i];
+            randomSelection = Math.floor( Math.random() * mutations[limbname].length );
+            mutation = mutations[limbname][randomSelection];
+            switchLimb(limbname,mutation);
         }
     }
 
     function humanize () {
         var newLimb,
         limb;
-        flickerCounter = 0;
 
         if(listofMutatedLimbs.length > 0) {
             limb = listofMutatedLimbs[ Math.floor(Math.random() * listofMutatedLimbs.length )];
@@ -1533,6 +1587,16 @@ scientist_falling.initialize = function () {
             newLimb = { img : {  width : 0 } };
         }
         switchLimb(limb, newLimb);
+    }
+
+    function fullHumanization (){
+        var i = 0,
+        limbname;
+        for(i = 0; i < body_images.length; i+= 1) {
+            limbname = body_images[i];
+            //currentBodyImages[limbname] = humanities[limbname][0];
+            switchLimb(limbname, humanities[limbname][0]);
+        }
     }
 
     function calculateMutationPercentage() {
@@ -1592,6 +1656,41 @@ scientist_falling.initialize = function () {
                         contact.GetFixtureA().GetBody().parentObj.destroy = true;
                         humanize();
                     }
+                }
+            }
+
+             if(contact.GetFixtureB().GetBody().parentObj.isSuperPill === true ||
+                contact.GetFixtureA().GetBody().parentObj.isSuperPill === true ) {
+                //super pill is colliding
+                if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
+                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
+                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
+                        fullHumanization();
+                    }
+                } else if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
+                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
+                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
+                        fullHumanization();
+                    }
+                }
+            }
+
+             if(contact.GetFixtureA().GetBody().parentObj.isEbola === true ||
+                contact.GetFixtureB().GetBody().parentObj.isEbola === true) {
+                //virus is hitting something
+                if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
+                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
+                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
+                        fullMutation();
+                        setTimeout(releaseSuperPill, Math.random() * 3000 + 2000);
+                    }
+                } else if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
+                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
+                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
+                        fullMutation();
+                        setTimeout(releaseSuperPill, Math.random() * 3000 + 2000);
+                    }
+                    
                 }
             }
 
@@ -1744,6 +1843,8 @@ scientist_falling.initialize = function () {
     loadManager(tankImg, "images/tank.png");
     loadManager(bubbleImg, "images/bubble.png");
     loadManager(pillImage, "images/DNAPill.png", "dna");
+    loadManager(superPillImg, "images/GOLDPill.png");
+    loadManager(ebolaImg, "images/Ebola.png");
 
     humanities = bodyObject();
     mutations = bodyObject();
