@@ -1260,9 +1260,12 @@ scientist_falling.initialize = function () {
         }
     }
 
-    function createAmoeba (x,y) {
+    function createAmoeba (x,y,wide) {
         var amoeba = {},
-        rad = 40/scale;
+        wid = wide || 40,
+        rad;
+
+        rad = wid/scale;
 
         amoebaBod.position.x =  x;
         amoebaBod.position.y =  y;
@@ -1296,7 +1299,7 @@ scientist_falling.initialize = function () {
         y = 0;
         x = Math.random() * (canvaswidth / scale);
         y = (-container.y / scale) -5;
-        virus = createAmoeba(x,y);
+        virus = createAmoeba(x,y,60);
         virus.isEbola = true;
         virus.image = ebolaImg;
         amoebas.push(virus);
