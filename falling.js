@@ -160,7 +160,12 @@ scientist_falling.initialize = function () {
     twitterString = '',
     shareOnTwitter,
     cameraTarget = 0,
-    killerReleased = false;
+    killerReleased = false,
+    tubeTop = new Image(),
+    gameComplete = false,
+    scientistXPos = 0,
+    scientistYPos = 0,
+    cameraStopPos = 0;
 
     shareOnTwitter = function() {
         window.open(twitterString);
@@ -225,6 +230,8 @@ scientist_falling.initialize = function () {
         amoebaTimer = setTimeout(createRandomAmoeba, 2000);
 
         killerReleased = false;
+        gameComplete = false;
+        motor.y = -20;
 
         //setTimeout(releaseEbola, Math.random() * 14000 + 4000);
         setUpTube();
@@ -254,6 +261,7 @@ scientist_falling.initialize = function () {
     function cleanUpGameGarbage() {
         currentTouchMoveFunction = brokenFunction;
         currentTouchStartFunction = brokenFunction;
+        gameComplete = false;
         clearTimeout(amoebaTimer);
         clearTimeout(dnaTimer);
     }
@@ -428,7 +436,8 @@ scientist_falling.initialize = function () {
             currentMeterLevel = 1,
             countDownFontSize,
             countDownAlpha,
-            oldCount = 222;
+            oldCount = 222,
+            sliderLimit = 0;
 
             ux.meter = {
                 textfield : {
@@ -453,6 +462,29 @@ scientist_falling.initialize = function () {
                     y : (canvasheight - 80)
                 }
             };
+
+            
+
+            /*ux.slider = document.getElementById('ui-slider');
+            ux.bar = document.getElementById('ui-bar');
+            sliderLimit = ux.bar.offsetWidth;
+            console.log('slider limit is ' + sliderLimit);
+
+            function killEventFunction (e) {
+                multiverse.cancelevent(e);
+            }
+
+           multiverse.eventlistener('touchmove', ux.slider,killEventFunction);
+           multiverse.eventlistener('touchmove', ux.bar, killEventFunction);
+           multiverse.eventlistener('touchstart', ux.slider, killEventFunction);
+           multiverse.eventlistener('touchstart', ux.bar,killEventFunction);
+
+            ux.moveSlider = function(xPos) {
+                var ratio = xPos /canvaswidth;
+               // console.log('ratio is' + ratio);
+                ux.slider.style.left =  (-16) +( sliderLimit * ratio) + 'px';
+                
+            };*/
 
             ux.countdown = { text : '', fontSize : 0, x : 0, y : 0, alpha : 1 };
 
@@ -827,6 +859,12 @@ scientist_falling.initialize = function () {
                   };
     }());
 
+    function trackScientist () {
+        var bod = scientist[1].body;
+        scientistXPos = bod.GetPosition().x;
+        scientistYPos = bod.GetPosition().y;
+    }
+
      function updateAmoebas(meebArray, reset) {
         var m = 0, meeb = {};
         for(m = 0; m < meebArray.length; m+= 1) {
@@ -918,19 +956,22 @@ scientist_falling.initialize = function () {
     }
 
     function updateZoom() {
-        motor.y += ((motor.targetY - motor.y) * 0.1);
+        //motor.y += ((motor.targetY - motor.y) * 0.1);
         anchor.body.ApplyForce(new B2Vec2(motor.x,motor.y), anchor.body.GetWorldCenter() );
         motor.x *= 0.92;
     }
 
     function updateCamera() {
-        var scientistXPos = scientist[1].body.GetPosition().x,
-        scientistYPos = scientist[1].body.GetPosition().y,
-        targetY = 0;
-        targetY = (-scientistYPos * scale) + cameraTarget;
-        container.y = container.y + ((targetY - container.y) * 0.14);
-        velocity_Y = oldY - (scientistYPos * scale);
-        oldY = scientistYPos * scale;
+        var targetY = 0;
+        if (gameComplete !== true) {
+            targetY = (-scientistYPos * scale) + cameraTarget;
+            container.y = container.y + ((targetY - container.y) * 0.14);
+            velocity_Y = oldY - (scientistYPos * scale);
+            oldY = scientistYPos * scale;
+        } else {
+            container.y = cameraStopPos;
+        }
+        
     }
 
     function updateBubbles() {
@@ -955,9 +996,17 @@ scientist_falling.initialize = function () {
     }
 
     function checkifScientistisOutofTube () {
-        var scientistYPos = scientist[1].body.GetPosition().y;
+        //var scientistYPos = scientist[1].body.GetPosition().y;
         if(scientistYPos < -2000 ) {
-            selectGameState('end');
+            if(gameComplete === false) {
+                gameComplete = true;
+                cameraStopPos = container.y;
+                setTimeout(function(){
+                    selectGameState('end');
+                }, 3000);
+            }
+            motor.y = 8;
+           // selectGameState('end');
         }
         if(killerReleased === false) {
             if(scientistYPos < -1000) {
@@ -975,6 +1024,8 @@ scientist_falling.initialize = function () {
         if(fps <= 0) {
             fps = 15;
         }
+        trackScientist();
+        
         checkifScientistisOutofTube();
         updateCamera();
         updateZoom();
@@ -1001,6 +1052,7 @@ scientist_falling.initialize = function () {
         if(fps <= 0) {
             fps = 15;
         }
+        trackScientist();
         updateCamera();
         updateaManlyOpacity();
         cleanUpMadScientistWaste(amoebas);
@@ -1028,6 +1080,36 @@ scientist_falling.initialize = function () {
         //  instructions.render();
         } */
     }
+
+    function renderTubeTop () {
+        context.fillSyle= "rgb(255,255,255)";
+        //context.fillRect(0, (container.y + (-2000*scale) - 1200), canvaswidth, 1200);
+        context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
+    }
+
+    function renderRescueBubble () {
+        if(gameComplete === true) {
+            context.save();
+            context.strokeStyle = "rgba(255,255,255, 1)";
+            context.fillStyle = 'rgba(255,255,255, 0.2)';
+            context.lineWidth = 1;
+            
+            context.beginPath();
+            context.arc((container.x + scientistXPos * scale) - 20 ,( container.y + scientistYPos * scale) - 20 , 180, 0, Math.PI * 2, false);
+
+            context.fill();
+            context.stroke();
+            context.restore();
+
+            context.save();
+            context.beginPath();
+            context.fillStyle = 'rgba(255,255,255, 0.3)';
+            context.arc((container.x + scientistXPos * scale) - 80 ,( container.y + scientistYPos * scale) -80 , 50, 0, Math.PI * 2, false);
+            context.fill();
+            context.restore();
+        }
+    }
+
     
     function renderScientist() {
         var limb = {},
@@ -1194,9 +1276,11 @@ scientist_falling.initialize = function () {
             //renderNonWorldAmoebas(giantAmoebas,foreground);
         }*/
         //renderBubbles();
+        renderTubeTop();
         renderScientist();
         renderAmoebas();
         renderDNA();
+        renderRescueBubble();
         ui.render();
         renderLines();
     }
@@ -1235,7 +1319,10 @@ scientist_falling.initialize = function () {
         if(amoebas.length < 3) {
             x = Math.random() * (canvaswidth / scale);
             y = (-container.y / scale) -5;
-            releaseAmoeba(x,y);
+            if(y > -2000) {
+                 releaseAmoeba(x,y);
+            }
+            //releaseAmoeba(x,y);
         }
         amoebaTimer = setTimeout(createRandomAmoeba, Math.random()* 1000 + 1000);
     }
@@ -1311,13 +1398,11 @@ scientist_falling.initialize = function () {
         yPos,
         pill = {},
         vx = 0,
-        vy = 0,
-        scientistYPos = 0,
-        scientistXPos = 0;
+        vy = 0;
 
         if(percentageofHumanDNA > 0) {
-            scientistXPos = scientist[1].body.GetPosition().x;
-            scientistYPos = scientist[1].body.GetPosition().y;
+           // scientistXPos = scientist[1].body.GetPosition().x;
+           // scientistYPos = scientist[1].body.GetPosition().y;
             xPos = (Math.random() * canvaswidth) / scale;
             yPos = (canvasheight) / scale;
             vx = (scientistXPos - xPos) * 10;
@@ -1356,10 +1441,12 @@ scientist_falling.initialize = function () {
         if(DNApills.length < 1) {
             x = (Math.random() * canvaswidth) / scale;
             y = (-container.y / scale) -5;
-            pill = makePill(x,y);
-            pill.isDNA = true;
-            pill.image = pillImage;
-            DNApills.push(pill);
+            if(y > -2000)  {
+                  pill = makePill(x,y);
+                pill.isDNA = true;
+                pill.image = pillImage;
+                DNApills.push(pill);
+            }
         }
 
         dnaTimer = setTimeout(releaseDNA, Math.random() * 4000 + 4000);
@@ -1722,6 +1809,7 @@ scientist_falling.initialize = function () {
         anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
         motor.x = (directionVector * 0.1);
         multiverse.cancelevent(e);
+        //ui.moveSlider(x);
     }
 
     function setFingerPos (evt) {
@@ -1848,6 +1936,7 @@ scientist_falling.initialize = function () {
     loadManager(pillImage, "images/DNAPill.png", "dna");
     loadManager(superPillImg, "images/GOLDPill.png");
     loadManager(ebolaImg, "images/Ebola.png");
+    loadManager(tubeTop, "images/beaker_top.png");
 
     humanities = bodyObject();
     mutations = bodyObject();
