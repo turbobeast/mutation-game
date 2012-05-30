@@ -50,6 +50,7 @@ scientist_falling.initialize = function () {
     animFrame,
     introObj = {}, // = document.getElementById('intro'),
     outroObj = {},
+    madScientistIntroObj = {},
     shareLander = {},
     scientist = [],
     amoebas = [],
@@ -104,8 +105,6 @@ scientist_falling.initialize = function () {
     selectGameState = function(){},
     oldState = '',
     ui = {},
-    iOSVersion = 0,
-    score = 0,
     deathCounter = 0,
     countDownStarted = false,
     countDownStartTime,
@@ -119,6 +118,8 @@ scientist_falling.initialize = function () {
     emptyBar = document.getElementById('empty-bar'),
     mutationText = document.getElementById('mutation-text'),
     resetButton = document.getElementById('playagain'),
+    madScientistButton = document.getElementById('mad-scientist-unlock'),
+    madScientistStartButton = document.getElementById('mad-scientist-start'),
     glarePanel = document.getElementById('glare'),
     startGameButton1 = document.getElementById('begin-experiment'),
     startGameButton2 = document.getElementById('begin-experiment-2'),
@@ -126,7 +127,6 @@ scientist_falling.initialize = function () {
     oldDate = new Date(),
     manlyAlpha = 1,
     flickerCounter = 0,
-    skeletons= {},
     preSchool = true,
     instructions = {},
     container = {
@@ -161,11 +161,20 @@ scientist_falling.initialize = function () {
     shareOnTwitter,
     cameraTarget = 0,
     killerReleased = false,
+    superPillReleased = false,
     tubeTop = new Image(),
     gameComplete = false,
     scientistXPos = 0,
     scientistYPos = 0,
-    cameraStopPos = 0;
+    cameraStopPos = 0,
+    amoebaDelay = 1000,
+    leftWall = {},
+    rightWall = {},
+    resetTubeWalls = function(){},
+    tubeResetFunction = function(){},
+    currentGameOverFunction = function(){},
+    regularGameOverFunction = function(){},
+    madScientistGameOverFunction = function(){};
 
     shareOnTwitter = function() {
         window.open(twitterString);
@@ -229,7 +238,9 @@ scientist_falling.initialize = function () {
         //start random firing of Amoebas
         amoebaTimer = setTimeout(createRandomAmoeba, 2000);
 
+        amoebaDelay = 1000;
         killerReleased = false;
+        superPillReleased = false;
         gameComplete = false;
         motor.y = -20;
 
@@ -241,6 +252,7 @@ scientist_falling.initialize = function () {
         currentTouchStartFunction = setFingerPos;
         setUpCollisionHandler();
         cameraTarget = canvasheight * 0.85;
+        tubeResetFunction = resetTubeWalls;
         currentGameLoopFunction = fallingLoop;
     }
 
@@ -261,6 +273,7 @@ scientist_falling.initialize = function () {
     function cleanUpGameGarbage() {
         currentTouchMoveFunction = brokenFunction;
         currentTouchStartFunction = brokenFunction;
+        tubeResetFunction = brokenFunction;
         gameComplete = false;
         clearTimeout(amoebaTimer);
         clearTimeout(dnaTimer);
@@ -272,7 +285,7 @@ scientist_falling.initialize = function () {
     }
 
     function cleanUpEndGarbage () {
-        console.log('clean up end garbage');
+       /// console.log('clean up end garbage');
         currentResetFunction = brokenResetFunction;
         outroObj.targetAlpha = 0;
     }
@@ -373,8 +386,9 @@ scientist_falling.initialize = function () {
             textMSG = 'Doctor Nano has made it out of the tube with his DNA completely uncontaminated! ' +
                         'He is happy, but not very intersting...<br /> Play mad-scientist bonus round and see what' +
                         ' you can turn him into!';
-            currentResetFunction = tryMadScientistFunction;
-            resetButton.innerHTML = 'mad-scientist mode';
+            currentResetFunction = tryAgainFunction;
+            madScientistButton.style.visibility = 'visible';
+            resetButton.innerHTML = 'play again';
         } else {
             textMSG = 'Doctor Nano made it out of the tube, but his DNA is only ' + (percentageofHumanDNA * 100) +
                     '% human.<br />Get him out with 100% human DNA to unlock mad-scientist bonus round!';
@@ -388,11 +402,22 @@ scientist_falling.initialize = function () {
         //original_refferer
         //url
         twitterString = 'https://twitter.com/share' +
-                        '?original_referer=https%3A%2F%2Fiphone.stonecanoe.ca' +
+                        '?original_referer=https%3A%2F%2Fretrovirus.stonecanoe.ca' +
                         '&source=tweetbutton' +
                         '&text=I%20created%20this%20abomination!' +
                         '&url=http://iphone.stonecanoe.ca/' + queryString;
+    }
 
+    function introMadScientistMode () {
+        console.log('intro mad scientist mode!');
+        outroObj.targetAlpha = 0;
+        outroObj.setCallback(function(){
+            //outroObj
+        });
+        madScientistIntroObj.alpha = 1;
+        madScientistIntroObj.targetAlpha = 1;
+        madScientistIntroObj.elem.style.marginLeft = '0px';
+        currentResetFunction = tryMadScientistFunction;
     }
 
     selectGameState = function (state) {
@@ -436,8 +461,7 @@ scientist_falling.initialize = function () {
             currentMeterLevel = 1,
             countDownFontSize,
             countDownAlpha,
-            oldCount = 222,
-            sliderLimit = 0;
+            oldCount = 222;
 
             ux.meter = {
                 textfield : {
@@ -462,29 +486,6 @@ scientist_falling.initialize = function () {
                     y : (canvasheight - 80)
                 }
             };
-
-            
-
-            /*ux.slider = document.getElementById('ui-slider');
-            ux.bar = document.getElementById('ui-bar');
-            sliderLimit = ux.bar.offsetWidth;
-            console.log('slider limit is ' + sliderLimit);
-
-            function killEventFunction (e) {
-                multiverse.cancelevent(e);
-            }
-
-           multiverse.eventlistener('touchmove', ux.slider,killEventFunction);
-           multiverse.eventlistener('touchmove', ux.bar, killEventFunction);
-           multiverse.eventlistener('touchstart', ux.slider, killEventFunction);
-           multiverse.eventlistener('touchstart', ux.bar,killEventFunction);
-
-            ux.moveSlider = function(xPos) {
-                var ratio = xPos /canvaswidth;
-               // console.log('ratio is' + ratio);
-                ux.slider.style.left =  (-16) +( sliderLimit * ratio) + 'px';
-                
-            };*/
 
             ux.countdown = { text : '', fontSize : 0, x : 0, y : 0, alpha : 1 };
 
@@ -604,7 +605,6 @@ scientist_falling.initialize = function () {
     }());
 
     function bitwise (x) { return (x + 0.5) | 0; }
-    function radians (deg) { return (deg * Math.PI) /180; }
 
     function domObject (id) {
         var cBack = null,
@@ -966,8 +966,8 @@ scientist_falling.initialize = function () {
         if (gameComplete !== true) {
             targetY = (-scientistYPos * scale) + cameraTarget;
             container.y = container.y + ((targetY - container.y) * 0.14);
-            velocity_Y = oldY - (scientistYPos * scale);
-            oldY = scientistYPos * scale;
+            //velocity_Y = oldY - (scientistYPos * scale);
+           // oldY = scientistYPos * scale;
         } else {
             container.y = cameraStopPos;
         }
@@ -1005,7 +1005,7 @@ scientist_falling.initialize = function () {
                     selectGameState('end');
                 }, 3000);
             }
-            motor.y = 8;
+            motor.y = 0;
            // selectGameState('end');
         }
         if(killerReleased === false) {
@@ -1014,12 +1014,22 @@ scientist_falling.initialize = function () {
                 releaseEbola();
             }
         }
+
+        if(superPillReleased === false) {
+            if(scientistYPos < -1500) {
+                superPillReleased = true;
+                if((percentageofHumanDNA * 100) < 50) {
+                    releaseSuperPill();
+                }
+                 //releaseSuperPill();
+            }
+        }
     }
 
     function updateGame(){
         var timeDelta = (new Date() - oldDate),
         fps = bitwise(1000/ timeDelta);
-       // console.log('game is running at ' + fps + ' frames per second');
+        //console.log('game is running at ' + fps + ' frames per second');
         oldDate = new Date();
         if(fps <= 0) {
             fps = 15;
@@ -1040,6 +1050,7 @@ scientist_falling.initialize = function () {
         updateDeathCounter();
         ui.update();
 
+        //world.Step((1/fps), 30 , 30 );
         world.Step((1/fps), 30 , 30 );
         world.ClearForces();
         
@@ -1083,8 +1094,10 @@ scientist_falling.initialize = function () {
 
     function renderTubeTop () {
         context.fillSyle= "rgb(255,255,255)";
-        //context.fillRect(0, (container.y + (-2000*scale) - 1200), canvaswidth, 1200);
-        context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
+        if(container.y + (-2000*scale) > 0 ) {
+            context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
+        }
+       // context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
     }
 
     function renderRescueBubble () {
@@ -1218,23 +1231,6 @@ scientist_falling.initialize = function () {
 
     }
 
-    function renderParticles () {
-        var i = 0,
-        p = {};
-        
-        for(i = 0; i < particles.length; i+= 1) {
-            p = particles[i];
-            context.save();
-            context.globalAlpha = p.alpha;
-            
-            context.fillStyle = randomColor();
-            context.beginPath();
-            context.arc(p.x,p.y, 2, 0, Math.PI * 2, false);
-            context.fill();
-            context.restore();
-        }
-    }
-
     function renderBubbles () {
         var i = 0,
         bub = {};
@@ -1256,13 +1252,13 @@ scientist_falling.initialize = function () {
         context.fillStyle = 'rgba(255,255,255, 0.2)';
         for(i = 0; i < lines.length; i += 1) {
             ln = lines[i];
-            if(container.y + (ln.yPos * scale) < canvasheight &&  container.y + (ln.yPos * scale) > 0) {
-                context.fillRect(container.x + (ln.xPos * scale), container.y + (ln.yPos * scale), (ln.width * scale), ln.height);
+            if(container.y + (ln.scaledPos) < canvasheight &&  container.y + (ln.scaledPos) > 0) {
+                context.fillRect(container.x, container.y + (ln.scaledPos), (ln.scaledWidth), ln.height);
                 if(ln.text !== null) {
                     context.textAlign = 'left';
                     context.font = "bold  42px arial";
                   //  context
-                    context.fillText(ln.text, (ln.width * scale), container.y + (ln.yPos* scale) + (ln.width * 2));
+                    context.fillText(ln.text, (ln.scaledWidth), container.y + (ln.scaledPos) + (ln.width * 2));
                 }
             }
         }
@@ -1306,6 +1302,8 @@ scientist_falling.initialize = function () {
     endLoop = function () {
         outroObj.update();
         outroObj.render();
+        madScientistIntroObj.update();
+        madScientistIntroObj.render();
     };
 
     function runGame() {
@@ -1318,13 +1316,20 @@ scientist_falling.initialize = function () {
         y = 0;
         if(amoebas.length < 3) {
             x = Math.random() * (canvaswidth / scale);
+            //x = scientistXPos;
             y = (-container.y / scale) -5;
-            if(y > -2000) {
+            if(y > -1990) {
                  releaseAmoeba(x,y);
             }
             //releaseAmoeba(x,y);
         }
-        amoebaTimer = setTimeout(createRandomAmoeba, Math.random()* 1000 + 1000);
+        amoebaTimer = setTimeout(createRandomAmoeba, Math.random()* amoebaDelay + amoebaDelay);
+        if(amoebaDelay > 50) {
+            amoebaDelay -= 40;
+        } else {
+            amoebaDelay = 40;
+        }
+      
     }
 
     function dropAmoeba (evt) {
@@ -1376,7 +1381,6 @@ scientist_falling.initialize = function () {
         amoeba.isVirus = true;
         rand = Math.floor(Math.random() * amoebaModels.length );
         amoeba.image = amoebaModels[rand];
-       //amoeba.image = ebolaImg;
         amoebas.push(amoeba);
     }
 
@@ -1386,7 +1390,7 @@ scientist_falling.initialize = function () {
         y = 0;
         x = Math.random() * (canvaswidth / scale);
         y = (-container.y / scale) -5;
-        virus = createAmoeba(x,y,60);
+        virus = createAmoeba(x,y,65);
         virus.isEbola = true;
         virus.image = ebolaImg;
         amoebas.push(virus);
@@ -1401,8 +1405,6 @@ scientist_falling.initialize = function () {
         vy = 0;
 
         if(percentageofHumanDNA > 0) {
-           // scientistXPos = scientist[1].body.GetPosition().x;
-           // scientistYPos = scientist[1].body.GetPosition().y;
             xPos = (Math.random() * canvaswidth) / scale;
             yPos = (canvasheight) / scale;
             vx = (scientistXPos - xPos) * 10;
@@ -1441,14 +1443,13 @@ scientist_falling.initialize = function () {
         if(DNApills.length < 1) {
             x = (Math.random() * canvaswidth) / scale;
             y = (-container.y / scale) -5;
-            if(y > -2000)  {
+            if(y > -1990)  {
                   pill = makePill(x,y);
                 pill.isDNA = true;
                 pill.image = pillImage;
                 DNApills.push(pill);
             }
         }
-
         dnaTimer = setTimeout(releaseDNA, Math.random() * 4000 + 4000);
     }
 
@@ -1489,6 +1490,12 @@ scientist_falling.initialize = function () {
         canvas.width = canvaswidth;
     }
 
+    resetTubeWalls = function() {
+        world.DestroyBody(leftWall.body);
+        world.DestroyBody(rightWall.body);
+        setUpTube();
+    };
+
     function resizeCanvas (ww,hh) {
         var outerWidth = ww || window.innerWidth,
         outerHeight = hh || window.innerHeight;
@@ -1504,6 +1511,8 @@ scientist_falling.initialize = function () {
         fullBar.style.top = (canvasheight * 0.13) + 'px';
         fullBar.style.left = 22 + 'px';
         mutationText.style.top = ((canvasheight * 0.13) + 8) + 'px';
+        cameraTarget = canvasheight * 0.85;
+        tubeResetFunction();
     }
 
     document.changeSize = function(widf,hite,sway) {
@@ -1519,6 +1528,8 @@ scientist_falling.initialize = function () {
             ln = {};
             ln.xPos = 0;
             ln.yPos = (i * -20);
+            ln.scaledPos = ln.yPos * scale;
+
             if(i % 5 === 0) {
                 ln.width = 16;
                 ln.height = 12;
@@ -1528,6 +1539,7 @@ scientist_falling.initialize = function () {
                 ln.height = 6;
                 ln.text = null;
             }
+            ln.scaledWidth = ln.width * scale;
             lines.push(ln);
         }
     }
@@ -1589,9 +1601,7 @@ scientist_falling.initialize = function () {
         var tubeWallDef = new B2BodyDef(),
         tubeWallFix = new B2FixtureDef(),
         tubeWallDef2 = new B2BodyDef(),
-        tubeWallFix2 = new B2FixtureDef(),
-        leftWall = {},
-        rightWall = {};
+        tubeWallFix2 = new B2FixtureDef();
 
         tubeWallFix.shape = new B2PolygonShape();
         tubeWallFix.shape.SetAsBox(20/scale, (canvasheight * 200) /scale);
@@ -1684,7 +1694,6 @@ scientist_falling.initialize = function () {
         limbname;
         for(i = 0; i < body_images.length; i+= 1) {
             limbname = body_images[i];
-            //currentBodyImages[limbname] = humanities[limbname][0];
             switchLimb(limbname, humanities[limbname][0]);
         }
     }
@@ -1701,9 +1710,7 @@ scientist_falling.initialize = function () {
                 if(body_images[i] === 'bicep' || body_images[i] === 'thigh') {
                     human_limbs += 1;
                 }
-                
             } else {
-                
                 listofMutatedLimbs.push(body_images[i]);
             }
         }
@@ -1715,75 +1722,37 @@ scientist_falling.initialize = function () {
     function setUpCollisionHandler() {
         var listener = new B2ContactListener();
         listener.PostSolve = function(contact) {
+            var bodyA = contact.GetFixtureA().GetBody(),
+            bodyB = contact.GetFixtureB().GetBody();
 
-            if(contact.GetFixtureA().GetBody().parentObj.isVirus === true ||
-                contact.GetFixtureB().GetBody().parentObj.isVirus === true) {
-                //virus is hitting something
-                if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
-                        dehumanize();
-                    }
-                } else if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
-                        dehumanize();
-                    }
-                    
-                }
-            }
-
-            if(contact.GetFixtureB().GetBody().parentObj.isDNA === true ||
-                contact.GetFixtureA().GetBody().parentObj.isDNA === true ) {
-                //dna pill is colliding
-                if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
+    
+            if(bodyA.parentObj.isMan === true) {
+                if(bodyB.parentObj.destroy!== true) {
+                    if(bodyB.parentObj.isDNA === true) {
                         humanize();
-                    }
-                } else if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
-                        humanize();
-                    }
-                }
-            }
-
-             if(contact.GetFixtureB().GetBody().parentObj.isSuperPill === true ||
-                contact.GetFixtureA().GetBody().parentObj.isSuperPill === true ) {
-                //super pill is colliding
-                if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
+                    } else if (bodyB.parentObj.isVirus === true) {
+                        dehumanize();
+                    } else if (bodyB.parentObj.isEbola === true) {
+                        fullMutation();
+                    } else if (bodyB.parentObj.isSuperPill === true) {
                         fullHumanization();
                     }
-                } else if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
+                    bodyB.parentObj.destroy = true;
+                }
+            } else if (bodyB.parentObj.isMan === true) {
+                if(bodyA.parentObj.destroy!== true) {
+                    if(bodyA.parentObj.isDNA === true) {
+                        humanize();
+                    } else if (bodyA.parentObj.isVirus === true) {
+                        dehumanize();
+                    } else if (bodyA.parentObj.isEbola === true) {
+                        fullMutation();
+                    } else if (bodyA.parentObj.isSuperPill === true) {
                         fullHumanization();
                     }
+                    bodyA.parentObj.destroy = true;
                 }
             }
-
-             if(contact.GetFixtureA().GetBody().parentObj.isEbola === true ||
-                contact.GetFixtureB().GetBody().parentObj.isEbola === true) {
-                //virus is hitting something
-                if(contact.GetFixtureB().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureA().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureA().GetBody().parentObj.destroy = true;
-                        fullMutation();
-                        setTimeout(releaseSuperPill, Math.random() * 3000 + 2000);
-                    }
-                } else if(contact.GetFixtureA().GetBody().parentObj.isMan === true) {
-                    if(contact.GetFixtureB().GetBody().parentObj.destroy !== true) {
-                        contact.GetFixtureB().GetBody().parentObj.destroy = true;
-                        fullMutation();
-                        setTimeout(releaseSuperPill, Math.random() * 3000 + 2000);
-                    }
-                    
-                }
-            }
-
         };
 
         world.SetContactListener(listener);
@@ -1838,6 +1807,8 @@ scientist_falling.initialize = function () {
         //multiverse.eventlistener('click', shareButton, shareOnTwitter);
         multiverse.eventlistener('touchend', shareButton, shareOnTwitter);
         multiverse.eventlistener('touchstart', resetButton, reset);
+        multiverse.eventlistener('touchstart', madScientistButton, introMadScientistMode);
+        multiverse.eventlistener('touchstart', madScientistStartButton, reset);
         multiverse.eventlistener('click', resetButton, reset);
 
         runGame();
@@ -1915,12 +1886,12 @@ scientist_falling.initialize = function () {
 
     tryMadScientistFunction = function() {
         cleanHouse();
-        outroObj.targetAlpha = 0;
-        outroObj.alpha = 0;
+        madScientistIntroObj.targetAlpha = 0;
 
-        outroObj.setCallback(function(){
+        madScientistIntroObj.setCallback(function(){
             currentResetFunction = brokenFunction;
             selectGameState('mad-scientist');
+            madScientistIntroObj.elem.style.marginLeft = '-9000px';
         });
     };
 
@@ -1944,6 +1915,7 @@ scientist_falling.initialize = function () {
     introObj = domObject('intro');
     shareLander = domObject('share-lander');
     outroObj = domObject('outro');
+    madScientistIntroObj = domObject('mad-scientist-intro');
 
     mutantParts(['skeleton', 'chicken', 'octopus', 'bodybuilder'], 'forearm_left');
     mutantParts(['chicken', 'skeleton', 'octopus', 'bodybuilder'], 'forearm_right');
