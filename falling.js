@@ -117,6 +117,7 @@ scientist_falling.initialize = function () {
     DNApills = [],
     pillImage = new Image(),
     superPillImg = new Image(),
+    powerUpImage = new Image(),
     ebolaImg = new Image(),
     fullBar = document.getElementById('full-bar'),
     emptyBar = document.getElementById('empty-bar'),
@@ -176,6 +177,7 @@ scientist_falling.initialize = function () {
     cameraTarget = 0,
     killerReleased = false,
     superPillReleased = false,
+    powerUpReleased = false,
     tubeTop = new Image(),
     gameComplete = false,
     scientistXPos = 0,
@@ -190,7 +192,9 @@ scientist_falling.initialize = function () {
     oldMenuScreen = null,
     currentSubScreen = {},
     gameURL = 'http://retrovirus.stonecanoe.ca/index.php',
-    queryString = '';
+    queryString = '',
+    ironMan = {},
+    ironManPower = false;
 
     shareOnTwitter = function() {
         var twitterString = 'https://twitter.com/share' +
@@ -264,6 +268,7 @@ scientist_falling.initialize = function () {
         amoebaDelay = 1000;
         killerReleased = false;
         superPillReleased = false;
+        powerUpReleased = false
         gameComplete = false;
         motor.y = -20;
 
@@ -731,7 +736,8 @@ scientist_falling.initialize = function () {
         loadedSoFar = 0,
         numberOfAssets = nameArray.length,
         src,
-        obj = {};
+        obj = {}
+        mage = {};
 
         incrementLoadCount = function(evt) {
             var e = evt || window.event;
@@ -744,11 +750,11 @@ scientist_falling.initialize = function () {
         };
 
         for(b = 0; b < nameArray.length; b+= 1) {
-            superArray[nameArray[b]] = new Image();
-            multiverse.eventlistener('load', superArray[nameArray[b]], incrementLoadCount);
+            mage = new Image();
+            multiverse.eventlistener('load', mage, incrementLoadCount);
             src = 'images/' + prefix + '_' + nameArray[b]+ '.png';
-            superArray[nameArray[b]].src = src;
-            obj = objectCreator(superArray[nameArray[b]], 'scientist');
+            mage.src = src;
+            obj = objectCreator(mage, prefix);
             obj.isHuman = true;
             superArray[nameArray[b]] = obj;
         }
@@ -876,7 +882,7 @@ scientist_falling.initialize = function () {
         tempFilt;
 
        // fixDef.density = 0.01;
-        fixDef.density = 0.0005;
+        fixDef.density = 0.001;
         fixDef.friction = 0.00005;
         fixDef.restitution = 0.04;
 
@@ -1069,7 +1075,7 @@ scientist_falling.initialize = function () {
 
     function checkifScientistisOutofTube () {
         //var scientistYPos = scientist[1].body.GetPosition().y;
-        if(scientistYPos < -500 /*-2000*/ ) {
+        if(scientistYPos < -2000 ) {
             if(gameComplete === false) {
                 gameComplete = true;
                 cameraStopPos = container.y;
@@ -1092,6 +1098,19 @@ scientist_falling.initialize = function () {
                 if((percentageofHumanDNA * 100) < 50) {
                     releaseSuperPill();
                 }
+            }
+        }
+
+        if(powerUpReleased === false) {
+            if(scientistYPos < -1700) {
+                powerUpReleased = true;
+                releasePowerUp();
+            }
+        }
+
+         if(ironManPower === true) {
+            if(scientistYPos < -1900) {
+                ironManPower = false;
             }
         }
     }
@@ -1216,7 +1235,11 @@ scientist_falling.initialize = function () {
             context.fillStyle = 'rgba(255,255,255, .3)';
             context.rotate(limb.body.GetAngle());
             
-            img = currentBodyImages[limb.name].img;
+            if( ironManPower === true ) {
+                 img = ironMan[limb.name].img;
+             } else {
+                img = currentBodyImages[limb.name].img;
+             }
             context.drawImage(img,
                                 -limb.scaledWidth,
                                 -limb.scaledHeight,
@@ -1469,6 +1492,18 @@ scientist_falling.initialize = function () {
        
     }
 
+    function releasePowerUp () {
+        var pu,
+        x = 0,
+        y = 0;
+        x = Math.random() * (canvaswidth / scale );
+        y = (-container.y / scale ) - 5;
+        pu = createAmoeba(x,y,45);
+        pu.isPowerUp = true;
+        pu.image = powerUpImage;
+        amoebas.push(pu);
+    }
+
     function fireDNA () {
         var xPos,
         yPos,
@@ -1655,7 +1690,7 @@ scientist_falling.initialize = function () {
     }
 
     function setUpAmoebas() {
-        amoebaFix.density = 1;
+        amoebaFix.density = 0.000001;
         amoebaFix.friction = 0;
         amoebaFix.restitution = 1;
         amoebaFix.shape = new B2CircleShape(40/scale);
@@ -1788,7 +1823,7 @@ scientist_falling.initialize = function () {
             var bodyA = contact.GetFixtureA().GetBody(),
             bodyB = contact.GetFixtureB().GetBody();
 
-    
+            if(ironManPower === true ) { return false; }
             if(bodyA.parentObj.isMan === true && bodyB.parentObj.isMan !== true) {
                 if(bodyB.parentObj.destroy!== true) {
                     if(bodyB.parentObj.isDNA === true) {
@@ -1799,6 +1834,8 @@ scientist_falling.initialize = function () {
                         fullMutation();
                     } else if (bodyB.parentObj.isSuperPill === true) {
                         fullHumanization();
+                    } else if (bodyB.parentObj.isPowerUp === true ) {
+                        ironManPower = true;
                     }
                     bodyB.parentObj.destroy = true;
                 }
@@ -1812,6 +1849,8 @@ scientist_falling.initialize = function () {
                         fullMutation();
                     } else if (bodyA.parentObj.isSuperPill === true) {
                         fullHumanization();
+                    } else if (bodyA.parentObj.isPowerUp === true ) {
+                        ironManPower = true;
                     }
                     bodyA.parentObj.destroy = true;
                 }
@@ -1970,6 +2009,7 @@ scientist_falling.initialize = function () {
     loadManager(superPillImg, "images/GOLDPill.png");
     loadManager(ebolaImg, "images/Ebola.png");
     loadManager(tubeTop, "images/beaker_top.png");
+    loadManager(powerUpImage, "images/powerup.png");
 
     humanities = bodyObject();
     mutations = bodyObject();
@@ -1988,6 +2028,10 @@ scientist_falling.initialize = function () {
         makeScientistMutant();
         currentBodyImages = scientistBody;
         allSystemsGo();
+    });
+
+    ironMan = superCreator(body_images, 'ironman', function(){
+        //console.log('ironman ready!');
     });
 
     function setUpButtons () {
