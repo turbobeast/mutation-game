@@ -136,7 +136,7 @@ scientist_falling.initialize = function () {
     gotomulti_btn = document.getElementById('gotomultichoice'),
     //shared screen 
     gotosplash_btn = document.getElementById('gotogame'),
-    mscontinue_btn = document.getElementById('ms-continue'),
+    //mscontinue_btn = document.getElementById('ms-continue'),
     closeShare_btn = document.getElementById('close-share'),
     shareShade = document.getElementById('shade'),
     twitter_btn = document.getElementById('twitter-share'),
@@ -219,7 +219,7 @@ scientist_falling.initialize = function () {
             link : thelink,
             picture : 'http://iphone.stonecanoe.ca/falling/images/falling_nano.png'
         }, function(response){
-            console.log('response: ' + response);
+           // console.log('response: ' + response);
         } );
     };
 
@@ -288,14 +288,15 @@ scientist_falling.initialize = function () {
         tubeResetFunction = resetTubeWalls;
 
         document.getElementById('grip-inner').style.opacity = 1;
-        document.getElementById('grip-border').style.opacity = 0.4;
+        document.getElementById('grip-border').style.opacity = 1;
+        document.getElementById('grip-text').style.opacity = 1;
         //currentGameLoopFunction = fallingLoop;
     }
 
     function initializeMadScientist () {
         //outroObj.elem.style.marginLeft = "-9000px";
         cleanHouse();
-        console.log('mad scientist');
+        //console.log('mad scientist');
         mainMenu.setCallback(function() { currentGameLoopFunction = madScienceLoop; });
         removeMenus();
         world = new B2World( new B2Vec2(0,0)/*gravity*/ , false/*allow sleep*/);
@@ -310,6 +311,7 @@ scientist_falling.initialize = function () {
         cameraTarget = canvasheight * 0.5;
         document.getElementById('grip-inner').style.opacity = 0;
         document.getElementById('grip-border').style.opacity = 0;
+        document.getElementById('grip-text').style.opacity = 0;
         //currentGameLoopFunction = madScienceLoop;
     }
 
@@ -412,20 +414,20 @@ scientist_falling.initialize = function () {
         /*textMSG = textMSG.slice(0, (textMSG.length-1));
         textMSG += ' abomination!';*/
 
-        console.log('percentage of human DNA is ' + percentageofHumanDNA);
+       // console.log('percentage of human DNA is ' + percentageofHumanDNA);
         if(oState !== 'mad-scientist') {
             if(Math.round(percentageofHumanDNA* 100) == 0) {
-                console.log('total failure');
+               // console.log('total failure');
                 selectMenuScreen('end');
                 titleMSG = "Fail!";
                 lowerMSG = "Dr. Nano has mutated beyond recognition. His wife will be upset... Experiment again.";
                 titleContainer.innerHTML = titleMSG;
                 lowerContainer.innerHTML = lowerMSG;
             } else if (Math.round(percentageofHumanDNA* 100) === 100) {
-                console.log('success');
+               // console.log('success');
                 selectMenuScreen('success');
             } else {
-                console.log('partial failure');
+               // console.log('partial failure');
                 titleMSG = "So close!";
                 lowerMSG = "Dr. Nano escaped total mutation but he's not quite right. Try to save his human form.";
                 titleContainer.innerHTML = titleMSG;
@@ -461,7 +463,7 @@ scientist_falling.initialize = function () {
         }
         switch(screen) {
             case 'end':
-            console.log('end');
+            //console.log('end');
                 endScreen.targetAlpha = 1;
                 endScreen.elem.style.left = 0;
                 endScreen.elem.style.visibility = "visible";
@@ -661,7 +663,7 @@ scientist_falling.initialize = function () {
                     }
 
                     ux.grabMeter.elem.style.width = ux.grabMeter.width + 'px';
-                    console.log('the width should be ' + ux.grabMeter.width);
+                    //console.log('the width should be ' + ux.grabMeter.width);
                 };
 
             return ux;
@@ -2131,7 +2133,8 @@ scientist_falling.initialize = function () {
         multiverse.eventlistener('touchstart', gotomulti_btn, function(){
            // currentSubScreen.elem.style.left = '-9999px';
             removeMenus();
-            selectMenuScreen('multi');
+            selectGameState('mad-scientist');
+            //selectMenuScreen('multi');
         } );
 
         //shared screen 
@@ -2153,10 +2156,10 @@ scientist_falling.initialize = function () {
         } );
 
         //ms success
-        multiverse.eventlistener('touchstart', mscontinue_btn, function() {
+        /*multiverse.eventlistener('touchstart', mscontinue_btn, function() {
             removeMenus();
             selectMenuScreen('multi');
-        });
+        });*/
 
         multiverse.eventlistener('touchstart', twitter_btn, shareOnTwitter );
         multiverse.eventlistener('touchstart', facebook_btn, shareOnFacebook );
