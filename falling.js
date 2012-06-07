@@ -194,7 +194,11 @@ scientist_falling.initialize = function () {
     gameURL = 'http://retrovirus.stonecanoe.ca/index.php',
     queryString = '',
     ironMan = {},
-    ironManPower = false;
+    ironManPower = false,
+    boggedDown = false,
+    boggedDownTimer = null,
+    grabDate = 0,
+    grabbed = false;
 
     shareOnTwitter = function() {
         var twitterString = 'https://twitter.com/share' +
@@ -269,6 +273,7 @@ scientist_falling.initialize = function () {
         killerReleased = false;
         superPillReleased = false;
         powerUpReleased = false
+        ironManPower = false;
         gameComplete = false;
         motor.y = -20;
 
@@ -281,6 +286,9 @@ scientist_falling.initialize = function () {
         cameraTarget = canvasheight * 0.85;
         //currentAcceleromterFunction = fancyGravity;
         tubeResetFunction = resetTubeWalls;
+
+        document.getElementById('grip-inner').style.opacity = 1;
+        document.getElementById('grip-border').style.opacity = 0.4;
         //currentGameLoopFunction = fallingLoop;
     }
 
@@ -300,6 +308,8 @@ scientist_falling.initialize = function () {
         currentTouchMoveFunction = brokenFunction;
         setUpCollisionHandler();
         cameraTarget = canvasheight * 0.5;
+        document.getElementById('grip-inner').style.opacity = 0;
+        document.getElementById('grip-border').style.opacity = 0;
         //currentGameLoopFunction = madScienceLoop;
     }
 
@@ -310,6 +320,7 @@ scientist_falling.initialize = function () {
         gameComplete = false;
         clearTimeout(amoebaTimer);
         clearTimeout(dnaTimer);
+        ironManPower = false;
     }
 
     function cleanUpMadScientistGarbage() {
@@ -362,13 +373,14 @@ scientist_falling.initialize = function () {
         return prefix;
     }
 
-    function mutateDiagramImage () {
+    function mutateDiagramImage (mutantArray) {
         var i = 0,
         currentMutation = '',
         mages = document.getElementsByTagName('img');
 
         for(i = 0; i < body_images.length; i += 1) {
-            currentMutation = currentBodyImages[body_images[i]].name;
+            //currentMutation = currentBodyImages[body_images[i]].name;
+            currentMutation = mutantArray[body_images[i]].name;
             for(g = 0; g < mages.length; g += 1) {
                 if(mages[g].className === body_images[i]) {
                     mages[g].src = 'images/' + currentMutation + '_' + body_images[i] + '.png';
@@ -395,7 +407,7 @@ scientist_falling.initialize = function () {
             }
         }
 
-        mutateDiagramImage();
+        mutateDiagramImage(currentBodyImages);
 
         /*textMSG = textMSG.slice(0, (textMSG.length-1));
         textMSG += ' abomination!';*/
@@ -568,6 +580,12 @@ scientist_falling.initialize = function () {
                 }
             };
 
+            ux.grabMeter = {
+                elem : document.getElementById('grip-inner'),
+                targetWidth : 309,
+                width : 309
+            };
+
             ux.countdown = { text : '', fontSize : 0, x : 0, y : 0, alpha : 1 };
 
             ux.update = function () {
@@ -596,6 +614,19 @@ scientist_falling.initialize = function () {
                     ux.countdown.y = (canvasheight * 0.5);
                 }
                     oldCount = deathCounter;
+
+                if(grabbed === true) {
+                    ux.grabMeter.targetWidth = 309 -  Math.floor(( ( new Date() - grabDate ) / 1000) * 309);
+                    //console.log('time is ' + ((new Date() - grabDate) / 1000 ));
+                } else {
+                     ux.grabMeter.targetWidth = 309;
+                }
+                ux.grabMeter.width += (ux.grabMeter.targetWidth - ux.grabMeter.width ) * 0.2;
+                if(ux.grabMeter.width < 5) {
+                    ux.grabMeter.width = 0;
+                }
+                //ux.grabMeter.width = Math.floor( (new Date() - grabDate ) / 1000) * 309;
+                //deathCounter = Math.floor(  (new Date() - countDownStartTime) / 1000 );
             };
 
             ux.render = function () {
@@ -629,6 +660,8 @@ scientist_falling.initialize = function () {
                         }
                     }
 
+                    ux.grabMeter.elem.style.width = ux.grabMeter.width + 'px';
+                    console.log('the width should be ' + ux.grabMeter.width);
                 };
 
             return ux;
@@ -834,8 +867,10 @@ scientist_falling.initialize = function () {
        
         tetherFix.shape = new B2CircleShape(0);
         tempFilt =  tetherFix.filter;
-        tempFilt.categoryBits = 2;
-        tempFilt.maskBits = 2;
+        //tempFilt.categoryBits = 2;
+        //tempFilt.maskBits = 2;
+        tempFilt.categoryBits = 32;
+        tempFilt.maskBits = 16;
         tetherFix.filter = tempFilt;
         tetherDef.position.x = (xPos) / scale;
         tetherDef.position.y = yPos / scale;
@@ -1023,9 +1058,11 @@ scientist_falling.initialize = function () {
         if(flickerCounter < 8 ) {
 
             if(flickerCounter % 4 === 0 ) {
-                manlyAlpha = 0.2;
+                //manlyAlpha = 0.2;
+                manlyAlpha = 1;
             } else {
-                manlyAlpha += 0.1;
+                //manlyAlpha += 0.1;
+                manlyAlpha = 0.1;
             }
 
             flickerCounter += 1;
@@ -1075,7 +1112,7 @@ scientist_falling.initialize = function () {
 
     function checkifScientistisOutofTube () {
         //var scientistYPos = scientist[1].body.GetPosition().y;
-        if(scientistYPos < -2000 ) {
+        if(scientistYPos < -1000 ) {
             if(gameComplete === false) {
                 gameComplete = true;
                 cameraStopPos = container.y;
@@ -1086,14 +1123,14 @@ scientist_falling.initialize = function () {
             motor.y = 0;
         }
         if(killerReleased === false) {
-            if(scientistYPos < -1000) {
+            if(scientistYPos < -500) {
                 killerReleased = true;
                 releaseEbola();
             }
         }
 
         if(superPillReleased === false) {
-            if(scientistYPos < -1500) {
+            if(scientistYPos < -700) {
                 superPillReleased = true;
                 if((percentageofHumanDNA * 100) < 50) {
                     releaseSuperPill();
@@ -1102,15 +1139,17 @@ scientist_falling.initialize = function () {
         }
 
         if(powerUpReleased === false) {
-            if(scientistYPos < -1700) {
+            if(scientistYPos < -750) {
                 powerUpReleased = true;
                 releasePowerUp();
             }
         }
 
          if(ironManPower === true) {
-            if(scientistYPos < -1900) {
-                ironManPower = false;
+            if(scientistYPos < -900) {
+                //ironManPower = false;
+                setTimeout(function(){ironManPower = false;}, 500);
+                flickerCounter = 0;
             }
         }
     }
@@ -1180,8 +1219,8 @@ scientist_falling.initialize = function () {
 
     function renderTubeTop () {
         context.fillSyle= "rgb(255,255,255)";
-        if(container.y + (-2000*scale) > 0 ) {
-            context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
+        if(container.y + (-1000*scale) > 0 ) {
+            context.drawImage(tubeTop, 0, (container.y + (-1000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
         }
        // context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
     }
@@ -1338,7 +1377,7 @@ scientist_falling.initialize = function () {
                 context.fillRect(container.x, container.y + (ln.scaledPos), (ln.scaledWidth), ln.height);
                 if(ln.text !== null) {
                     context.textAlign = 'left';
-                    context.font = "bold  42px arial";
+                    context.font = "bold  82px arial";
                   //  context
                     context.fillText(ln.text, (ln.scaledWidth), container.y + (ln.scaledPos) + (ln.width * 2));
                 }
@@ -1413,7 +1452,7 @@ scientist_falling.initialize = function () {
             x = Math.random() * (canvaswidth / scale);
             //x = scientistXPos;
             y = (-container.y / scale) -5;
-            if(y > -1990) {
+            if(y > -990) {
                  releaseAmoeba(x,y);
             }
         }
@@ -1550,7 +1589,7 @@ scientist_falling.initialize = function () {
         if(DNApills.length < 1) {
             x = (Math.random() * canvaswidth) / scale;
             y = (-container.y / scale) -5;
-            if(y > -1990)  {
+            if(y > -990)  {
                   pill = makePill(x,y);
                 pill.isDNA = true;
                 pill.image = pillImage;
@@ -1574,17 +1613,38 @@ scientist_falling.initialize = function () {
 
     }
 
+    function releasetheBastard () {
+        boggedDown = true;
+        console.log('let me go!!');
+    }
+
     function touchStartRelay (evt) {
        // console.log("AUFG!");
         var e = evt || window.event;
         multiverse.cancelevent(e);
         currentTouchStartFunction(e);
+        if(boggedDownTimer === null) {
+            boggedDownTimer = setTimeout(releasetheBastard, 1000);
+            grabDate = new Date();
+        }
+        grabbed = true;
+        //boggedDownTimer = setTimeout(releasetheBastard, 1000);
     }
 
     function touchMoveRelay (evt) {
         var e = evt || window.event;
         multiverse.cancelevent(e);
         currentTouchMoveFunction(e);
+    }
+
+    function touchEndRelay (evt) {
+        var e = evt || window.event;
+        if(boggedDownTimer !== null) {
+            clearTimeout(boggedDownTimer);
+            boggedDownTimer = null;
+        }
+        boggedDown = false;
+        grabbed = false;
     }
 
     function sizeCanvas (ww,hh) {
@@ -1614,11 +1674,11 @@ scientist_falling.initialize = function () {
         canvas.height = canvasheight;
         canvas.width = canvaswidth;
 
-        emptyBar.style.top = (canvasheight * 0.13) + 'px';
+        /*emptyBar.style.top = (canvasheight * 0.13) + 'px';
         emptyBar.style.left = 22 + 'px';
         fullBar.style.top = (canvasheight * 0.13) + 'px';
         fullBar.style.left = 22 + 'px';
-        mutationText.style.top = ((canvasheight * 0.13) + 8) + 'px';
+        mutationText.style.top = ((canvasheight * 0.13) + 8) + 'px';*/
         cameraTarget = canvasheight * 0.85;
         tubeResetFunction();
     }
@@ -1641,7 +1701,7 @@ scientist_falling.initialize = function () {
             if(i % 5 === 0) {
                 ln.width = 16;
                 ln.height = 12;
-                ln.text = ((ln.yPos + 2000) * 0.1) + 'ml';
+                ln.text = ((ln.yPos + 1000) * 0.1) + 'ml';
             } else {
                 ln.width = 8;
                 ln.height = 6;
@@ -1836,6 +1896,7 @@ scientist_falling.initialize = function () {
                         fullHumanization();
                     } else if (bodyB.parentObj.isPowerUp === true ) {
                         ironManPower = true;
+                        flickerCounter = 0;
                     }
                     bodyB.parentObj.destroy = true;
                 }
@@ -1851,6 +1912,7 @@ scientist_falling.initialize = function () {
                         fullHumanization();
                     } else if (bodyA.parentObj.isPowerUp === true ) {
                         ironManPower = true;
+                        flickerCounter = 0;
                     }
                     bodyA.parentObj.destroy = true;
                 }
@@ -1877,8 +1939,11 @@ scientist_falling.initialize = function () {
 
         directionVector = x - fingerStartPos;
         yPos = scientist[1].body.GetPosition().y;
-        anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
-        motor.x = (directionVector * 0.1);
+        if(boggedDown === false) {
+            anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
+            motor.x = (directionVector * 0.1);
+        }
+       
         multiverse.cancelevent(e);
         //ui.moveSlider(x);
     }
@@ -1906,6 +1971,7 @@ scientist_falling.initialize = function () {
         //game buttons
         multiverse.eventlistener('touchmove', glarePanel, touchMoveRelay);
         multiverse.eventlistener('touchstart', glarePanel, touchStartRelay);
+        multiverse.eventlistener('touchend', glarePanel, touchEndRelay);
 
         setUpButtons();
         selectGameState('intro');
