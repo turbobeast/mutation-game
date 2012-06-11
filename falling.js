@@ -204,7 +204,8 @@ scientist_falling.initialize = function () {
     boggedDownTimer = null,
     grabDate = 0,
     grabbed = false,
-    energyTextBox = document.getElementById('grip-text');
+    energyTextBox = document.getElementById('grip-text'),
+    xPower = 0;
 
     shareOnTwitter = function() {
         var thelink = gameURL + queryString,
@@ -279,7 +280,7 @@ scientist_falling.initialize = function () {
 
         amoebaDelay = 1000;
         
-        motor.y = -20;
+        motor.y = -25;
 
         setUpTube();
         initLines();
@@ -316,7 +317,7 @@ scientist_falling.initialize = function () {
         currentAcceleromterFunction = fancyGravity;
         currentTouchStartFunction = dropAmoeba;
         currentTouchMoveFunction = brokenFunction;
-        setUpCollisionHandler();
+        setUpMSCollisionHandler();
         targetRatio = 0.5;
         cameraTarget = canvasheight * targetRatio;
         document.getElementById('full-bar').style.opacity = 1;
@@ -721,16 +722,14 @@ scientist_falling.initialize = function () {
                         }
                     }
 
-                    //ux.grabMeter.elem.style.width = ux.grabMeter.width + 'px';
-                    //ux.grabMeter.textElem.innerHTML = ux.grabMeter.infoTxt;
-                    //console.log('the width should be ' + ux.grabMeter.width);
                 };
 
                 ux.nonMadScienceRender = function (){ 
 
                     if(boggedDown === false ) {
-                         ux.grabMeter.textElem.style.opacity = 1;
+                        ux.grabMeter.textElem.style.opacity = 1;
                         ux.grabMeter.backBar.style.opacity = 1;
+                        ux.grabMeter.currentOpacity = 1;
                     }
                     ux.grabMeter.backBar.style.opacity = ux.grabMeter.currentOpacity;
                     ux.grabMeter.elem.style.width = ux.grabMeter.width + 'px';
@@ -932,7 +931,7 @@ scientist_falling.initialize = function () {
         if(dynamic === true) {
             tetherFix.density = 0.02;
             tetherFix.friction = 0;
-            tetherFix.restitution = 4;
+            tetherFix.restitution = 0.1;
             tetherDef.type = b2Body.b2_dynamicBody;
          } else {
              tetherDef.type = b2Body.b2_staticBody;
@@ -990,9 +989,9 @@ scientist_falling.initialize = function () {
         tempFilt;
 
        // fixDef.density = 0.01;
-        fixDef.density = 0.001;
-        fixDef.friction = 0.00005;
-        fixDef.restitution = 0.04;
+        fixDef.density = 0.01;//0.01;// 0.001;
+        fixDef.friction = 1;//1;//0.00005;
+        fixDef.restitution = 0.1;//0.1;// 0.04;
 
         bodyDef.type = b2Body.b2_dynamicBody;
 
@@ -1023,6 +1022,10 @@ scientist_falling.initialize = function () {
         leftForeArm.fixture.SetFilterData(tempFilt);
         rightArm.fixture.SetFilterData(tempFilt);
         leftArm.fixture.SetFilterData(tempFilt);
+        /*rightCalf.fixture.SetFilterData(tempFilt);
+        leftCalf.fixture.SetFilterData(tempFilt);
+        rightThigh.fixture.SetFilterData(tempFilt);
+        leftThigh.fixture.SetFilterData(tempFilt);*/
 
         //joints
         neck = fusion(head.body, torso.body, 0, -44, 0, 0.1);
@@ -1867,7 +1870,7 @@ scientist_falling.initialize = function () {
     function setUpAmoebas() {
         amoebaFix.density = 0.000001;
         amoebaFix.friction = 0;
-        amoebaFix.restitution = 1;
+        amoebaFix.restitution = 4;
         amoebaFix.shape = new B2CircleShape(40/scale);
         amoebaBod.type = b2Body.b2_dynamicBody;
         amoebaCreator(amoebaModels, 'main', 5);
@@ -1876,7 +1879,7 @@ scientist_falling.initialize = function () {
     function setUpMadAmoebas() {
         amoebaFix.density = 2;
         amoebaFix.friction = 0;
-        amoebaFix.restitution = 0.3;
+        amoebaFix.restitution = 4;
         amoebaFix.shape = new B2CircleShape(40/scale);
         amoebaBod.type = b2Body.b2_dynamicBody;
         amoebaCreator(amoebaModels, 'main', 5);
@@ -1915,7 +1918,8 @@ scientist_falling.initialize = function () {
         tetherX = canvaswidth*0.5;
         tetherY = canvasheight* 0.6;
         createRagDoll((canvaswidth*0.5), (canvasheight* 0.6) );
-        anchor = tether(head.body, tetherX, tetherY-60, 4, true);
+       // anchor = tether(head.body, tetherX, tetherY-60, 4, true);
+        anchor = tether(head.body, tetherX, tetherY-10, 4, true);
     }
 
     function setUpMadScientistRagDoll () {
@@ -2012,18 +2016,69 @@ scientist_falling.initialize = function () {
             if(ironManPower === true ) { return false; }
             if(bodyA.parentObj.isMan === true && bodyB.parentObj.isMan !== true) {
                 if(bodyB.parentObj.destroy!== true) {
+                     bodyB.parentObj.destroy = true;
+                    if(bodyB.parentObj.isDNA === true) {
+                        humanize();
+                       // return;
+                    } else if (bodyB.parentObj.isVirus === true) {
+                        dehumanize();
+                        //return;
+                    } else if (bodyB.parentObj.isEbola === true) {
+                        fullMutation();
+                        //return;
+                    } else if (bodyB.parentObj.isSuperPill === true) {
+                        fullHumanization();
+                       // return;
+                    } else if (bodyB.parentObj.isPowerUp === true ) {
+                        ironManPower = true;
+                        flickerCounter = 0;
+                        //return;
+                    }
+                   // bodyB.parentObj.destroy = true;
+                }
+            } else if (bodyB.parentObj.isMan === true && bodyA.parentObj.isMan !== true) {
+                if(bodyA.parentObj.destroy!== true) {
+                      bodyA.parentObj.destroy = true;
+                    if(bodyA.parentObj.isDNA === true) {
+                        humanize();
+                         return;
+                    } else if (bodyA.parentObj.isVirus === true) {
+                        dehumanize();
+                         return;
+                    } else if (bodyA.parentObj.isEbola === true) {
+                        fullMutation();
+                         return;
+                    } else if (bodyA.parentObj.isSuperPill === true) {
+                        fullHumanization();
+                         return;
+                    } else if (bodyA.parentObj.isPowerUp === true ) {
+                        ironManPower = true;
+                        flickerCounter = 0;
+                         return;
+                    }
+                  
+                }
+            }
+        };
+
+        world.SetContactListener(listener);
+    }
+
+    function setUpMSCollisionHandler () {
+        var listener = new B2ContactListener();
+        listener.PostSolve = function(contact) {
+        //listener.PreSolve = function(contact) {
+            var bodyA = contact.GetFixtureA().GetBody(),
+            bodyB = contact.GetFixtureB().GetBody();
+
+            if(ironManPower === true ) { return false; }
+            if(bodyA.parentObj.isMan === true && bodyB.parentObj.isMan !== true) {
+                if(bodyB.parentObj.destroy!== true) {
                     if(bodyB.parentObj.isDNA === true) {
                         humanize();
                     } else if (bodyB.parentObj.isVirus === true) {
                         dehumanize();
-                    } else if (bodyB.parentObj.isEbola === true) {
-                        fullMutation();
-                    } else if (bodyB.parentObj.isSuperPill === true) {
-                        fullHumanization();
-                    } else if (bodyB.parentObj.isPowerUp === true ) {
-                        ironManPower = true;
-                        flickerCounter = 0;
-                    }
+                    } 
                     bodyB.parentObj.destroy = true;
                 }
             } else if (bodyB.parentObj.isMan === true && bodyA.parentObj.isMan !== true) {
@@ -2032,14 +2087,7 @@ scientist_falling.initialize = function () {
                         humanize();
                     } else if (bodyA.parentObj.isVirus === true) {
                         dehumanize();
-                    } else if (bodyA.parentObj.isEbola === true) {
-                        fullMutation();
-                    } else if (bodyA.parentObj.isSuperPill === true) {
-                        fullHumanization();
-                    } else if (bodyA.parentObj.isPowerUp === true ) {
-                        ironManPower = true;
-                        flickerCounter = 0;
-                    }
+                    } 
                     bodyA.parentObj.destroy = true;
                 }
             }
@@ -2066,7 +2114,8 @@ scientist_falling.initialize = function () {
         directionVector = x - fingerStartPos;
         yPos = scientist[1].body.GetPosition().y;
         if(boggedDown === false) {
-            anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
+            //anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
+            anchor.body.ApplyImpulse(new B2Vec2(directionVector*0.3,0), anchor.body.GetWorldCenter());
            /// motor.x = (directionVector * 0.1);
         }
        
