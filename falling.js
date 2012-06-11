@@ -145,6 +145,8 @@ scientist_falling.initialize = function () {
     facebook_btn = document.getElementById('facebook-share'),
     ready_btn = document.getElementById('readytogo'),
     getfreaky_btn = document.getElementById('getfreaky'),
+    save_btn = document.getElementById('save_btn'),
+    reset_btn = document.getElementById('reset_btn'),
     oldDate = new Date(),
     manlyAlpha = 1,
     flickerCounter = 0,
@@ -204,8 +206,9 @@ scientist_falling.initialize = function () {
     boggedDownTimer = null,
     grabDate = 0,
     grabbed = false,
-    energyTextBox = document.getElementById('grip-text'),
-    xPower = 0;
+    currentresetbtnfunction = function () {},
+    currentsavebtnfunction = function () {},
+    preschool = false;
 
     shareOnTwitter = function() {
         var thelink = gameURL + queryString,
@@ -264,7 +267,6 @@ scientist_falling.initialize = function () {
     }
 
     function initializeGame () {
-        //outroObj.elem.style.marginLeft = "-9000px";
         mainMenu.setCallback(function(){ currentGameLoopFunction = fallingLoop; });
         removeMenus();
 
@@ -277,11 +279,8 @@ scientist_falling.initialize = function () {
         setUpAmoebas();
         //start random firing of Amoebas
         amoebaTimer = setTimeout(createRandomAmoeba, 2000);
-
         amoebaDelay = 1000;
-        
         motor.y = -25;
-
         setUpTube();
         initLines();
 
@@ -293,9 +292,6 @@ scientist_falling.initialize = function () {
         //currentAcceleromterFunction = fancyGravity;
         tubeResetFunction = resetTubeWalls;
 
-        document.getElementById('grip-inner').style.opacity = 1;
-        document.getElementById('grip-border').style.opacity = 1;
-        document.getElementById('grip-text').style.opacity = 1;
         document.getElementById('full-bar').style.opacity = 1;
         document.getElementById('empty-bar').style.opacity = 1;
         document.getElementById('mutation-text').style.opacity = 1;
@@ -312,7 +308,7 @@ scientist_falling.initialize = function () {
         world = new B2World( new B2Vec2(0,0)/*gravity*/ , false/*allow sleep*/);
         setUpMadScientistRagDoll();
         setUpDNA();
-        dnaTimer = setTimeout(fireDNA, Math.random()* 4000 + 4000);
+        //dnaTimer = setTimeout(fireDNA, Math.random()* 4000 + 4000);
         setUpMadAmoebas();
         currentAcceleromterFunction = fancyGravity;
         currentTouchStartFunction = dropAmoeba;
@@ -323,12 +319,13 @@ scientist_falling.initialize = function () {
         document.getElementById('full-bar').style.opacity = 1;
         document.getElementById('empty-bar').style.opacity = 1;
         document.getElementById('mutation-text').style.opacity = 1;
-        document.getElementById('grip-inner').style.opacity = 0;
-        document.getElementById('grip-border').style.opacity = 0;
-        document.getElementById('grip-text').style.opacity = 0;
 
-       
-        //currentGameLoopFunction = madScienceLoop;
+        reset_btn.style.visibility = "visible";
+        save_btn.style.visibility = "visible";
+
+        currentresetbtnfunction = function () { fullHumanization(); console.log('hey'); };
+        currentsavebtnfunction = function () { selectGameState('end'); };
+        preschool = true;
     }
 
     function cleanUpGameGarbage() {
@@ -347,15 +344,16 @@ scientist_falling.initialize = function () {
         document.getElementById('full-bar').style.opacity = 0;
         document.getElementById('empty-bar').style.opacity = 0;
         document.getElementById('mutation-text').style.opacity = 0;
-        document.getElementById('grip-inner').style.opacity = 0;
-        document.getElementById('grip-border').style.opacity = 0;
-        document.getElementById('grip-text').style.opacity = 0;
         context.clearRect(0,0,canvaswidth,canvasheight);
     }
 
     function cleanUpMadScientistGarbage() {
+        reset_btn.style.visibility = "hidden";
+        save_btn.style.visibility = "hidden";
         currentAcceleromterFunction = brokenFunction;
         currentTouchStartFunction = brokenFunction;
+        currentresetbtnfunction = brokenFunction;
+        currentsavebtnfunction = brokenFunction;
         clearTimeout(dnaTimer);
         context.clearRect(0,0,canvaswidth,canvasheight);
         document.getElementById('full-bar').style.opacity = 0;
@@ -364,9 +362,7 @@ scientist_falling.initialize = function () {
     }
 
     function cleanUpEndGarbage () {
-       /// console.log('clean up end garbage');
         currentResetFunction = brokenResetFunction;
-        //outroObj.targetAlpha = 0;
     }
 
     function convertMutationToSecretNumber(mutationName) {
@@ -414,7 +410,6 @@ scientist_falling.initialize = function () {
         mages = document.getElementsByTagName('img');
 
         for(i = 0; i < body_images.length; i += 1) {
-            //currentMutation = currentBodyImages[body_images[i]].name;
             currentMutation = mutantArray[body_images[i]].name;
             for(g = 0; g < mages.length; g += 1) {
                 if(mages[g].className === body_images[i]) {
@@ -444,10 +439,6 @@ scientist_falling.initialize = function () {
 
         mutateDiagramImage(currentBodyImages);
 
-        /*textMSG = textMSG.slice(0, (textMSG.length-1));
-        textMSG += ' abomination!';*/
-
-       // console.log('percentage of human DNA is ' + percentageofHumanDNA);
         if(oState !== 'mad-scientist') {
             if(Math.round(percentageofHumanDNA* 100) == 0) {
                // console.log('total failure');
@@ -482,6 +473,7 @@ scientist_falling.initialize = function () {
             case 'splash':
                 splashScreen.targetAlpha = 0;
                 splashScreen.elem.style.visibility = 'hidden';
+              
             break;
             case 'multi':
             break;
@@ -510,6 +502,9 @@ scientist_falling.initialize = function () {
                 splashScreen.targetAlpha = 1;
                 splashScreen.elem.style.visibility = "visible";
                 currentSubScreen = splashScreen;
+                document.body.style.background = "url('images/dark_tile.jpg')";
+                mainMenu.elem.style.background = "url('images/dark_tile.jpg')";
+
             break;
             case 'multi':
                 multiChoice.targetAlpha = 1;
@@ -615,17 +610,6 @@ scientist_falling.initialize = function () {
                 }
             };
 
-            ux.grabMeter = {
-                elem : document.getElementById('grip-inner'),
-                textElem : document.getElementById('grip-text'),
-                backBar : document.getElementById('grip-border'),
-                infoTxt : "ENERGY",
-                targetWidth : 309,
-                width : 309,
-                toggle : 0,
-                currentOpacity : 1
-            };
-
             ux.countdown = { text : '', fontSize : 0, x : 0, y : 0, alpha : 1 };
 
             ux.update = function () {
@@ -655,40 +639,6 @@ scientist_falling.initialize = function () {
                 }
                     oldCount = deathCounter;
 
-                if(boggedDown === false) {
-                    if(grabbed === true) {
-                        ux.grabMeter.targetWidth = 309 -  Math.floor(( ( new Date() - grabDate ) / 1000) * 309);
-                        //console.log('time is ' + ((new Date() - grabDate) / 1000 ));
-                    } else {
-                         ux.grabMeter.targetWidth = 309;
-                    }
-                    ux.grabMeter.width += (ux.grabMeter.targetWidth - ux.grabMeter.width ) * 0.2;
-
-                    if(ux.grabMeter.width < 5) {
-                        ux.grabMeter.width = 0;
-                    }
-
-                    ux.grabMeter.infoTxt = "ENERGY";
-                    ux.grabMeter.toggle = 0;
-                    //ux.grabMeter.textElem.style.opacity = 1;
-                    //ux.grabMeter.backBar.style.opacity = 1;
-                } else {
-
-                    ux.grabMeter.toggle += 1;
-                    if( ux.grabMeter.toggle % 4 === 0) {
-                        if(ux.grabMeter.currentOpacity === 0) {
-                            ux.grabMeter.currentOpacity = 1;
-                        } else {
-                            ux.grabMeter.currentOpacity = 0;
-                        }
-                    } 
-                   
-                    ux.grabMeter.width = 0;
-                    ux.grabMeter.infoTxt = "LET GO TO REFILL";
-                }
-               
-                //ux.grabMeter.width = Math.floor( (new Date() - grabDate ) / 1000) * 309;
-                //deathCounter = Math.floor(  (new Date() - countDownStartTime) / 1000 );
             };
 
             ux.render = function () {
@@ -722,18 +672,6 @@ scientist_falling.initialize = function () {
                         }
                     }
 
-                };
-
-                ux.nonMadScienceRender = function (){ 
-
-                    if(boggedDown === false ) {
-                        ux.grabMeter.textElem.style.opacity = 1;
-                        ux.grabMeter.backBar.style.opacity = 1;
-                        ux.grabMeter.currentOpacity = 1;
-                    }
-                    ux.grabMeter.backBar.style.opacity = ux.grabMeter.currentOpacity;
-                    ux.grabMeter.elem.style.width = ux.grabMeter.width + 'px';
-                    ux.grabMeter.textElem.innerHTML = ux.grabMeter.infoTxt;
                 };
 
             return ux;
@@ -841,7 +779,7 @@ scientist_falling.initialize = function () {
         loadedSoFar = 0,
         numberOfAssets = nameArray.length,
         src,
-        obj = {}
+        obj = {},
         mage = {};
 
         incrementLoadCount = function(evt) {
@@ -1246,14 +1184,6 @@ scientist_falling.initialize = function () {
         }
     }
 
-    function updateEnergyText () {
-        if(boggedDown === true ) {
-            energyTextBox.innerHTML = "LET GO TO REFILL";
-        } else {
-            energyTextBox.innerHTML = "ENERGY";
-        }
-    }
-
     function updateGame(){
         var timeDelta = (new Date() - oldDate),
         fps = bitwise(1000/ timeDelta);
@@ -1277,9 +1207,7 @@ scientist_falling.initialize = function () {
         updateaManlyOpacity();
         updateDeathCounter();
         ui.update();
-       // updateEnergyText();
 
-        //world.Step((1/fps), 30 , 30 );
         world.Step((1/fps), 30 , 30 );
         world.ClearForces();
         
@@ -1298,15 +1226,15 @@ scientist_falling.initialize = function () {
         updateMadlyOpacity();
         cleanUpMadScientistWaste(amoebas);
         cleanUpMadScientistWaste(DNApills);
-        updateDeathCounter();
+         if(preschool === true) {
+            instructions.update();
+        }
         ui.update();
         world.Step((1/fps), 30 , 30 );
     }
 
     function renderMadScientistMode () {
-        //console.log('render');
         context.clearRect(0,0,canvaswidth, canvasheight);
-        //console.log('canvaswidth is ' + canvaswidth);
         /*if(iOSVersion > 4) {
             //renderNonWorldAmoebas(tinyAmoebas,context);
             //renderNonWorldAmoebas(giantAmoebas,foreground);
@@ -1315,7 +1243,9 @@ scientist_falling.initialize = function () {
         renderAmoebas();
         renderDNA();
         ui.render();
-        //renderLines();
+        if(preschool === true) {
+            instructions.render();
+        }
     }
 
     function renderTubeTop () {
@@ -1323,7 +1253,6 @@ scientist_falling.initialize = function () {
         if(container.y + (-1500*scale) > 0 ) {
             context.drawImage(tubeTop, 0, (container.y + (-1500*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
         }
-       // context.drawImage(tubeTop, 0, (container.y + (-2000*scale) - tubeTop.height) + 20, canvaswidth, tubeTop.height);
     }
 
     function renderRescueBubble () {
@@ -1487,17 +1416,6 @@ scientist_falling.initialize = function () {
 
     }
 
-    /*function renderLetGoMsg () {
-        if(boggedDown === true) {
-            context.save();
-            context.fillStyle = 'rgba(255,255,255,0.6)';
-            context.font = "bold 30px arial";
-            context.textAlign = 'center';
-            context.fillText("LET GO TO REFILL ENERGY!", canvaswidth * 0.5, canvasheight * 0.5);
-            context.restore();
-        }
-    }*/
-
     function renderGame() {
         context.clearRect(0,0,canvaswidth, canvasheight);
         /*if(iOSVersion > 4) {
@@ -1511,9 +1429,7 @@ scientist_falling.initialize = function () {
         renderDNA();
         renderRescueBubble();
         ui.render();
-        ui.nonMadScienceRender();
         renderLines();
-        //renderLetGoMsg();
     }
 
     fallingLoop = function () {
@@ -1523,8 +1439,6 @@ scientist_falling.initialize = function () {
     };
 
     madScienceLoop = function () {
-       //console.log('mad science ');
-       //console.log('mad science loop');
         updateMadScientistMode();
         renderMadScientistMode();
     };
@@ -1600,7 +1514,6 @@ scientist_falling.initialize = function () {
             x = (-container.x + fingerX) / scale;
             y = (-container.y + fingerY) / scale;
             releaseAmoeba(x,y);
-            //console.log('release that fucker');
         }
     }
 
@@ -1731,22 +1644,10 @@ scientist_falling.initialize = function () {
 
     }
 
-    function releasetheBastard () {
-        boggedDown = true;
-        console.log('let me go!!');
-    }
-
     function touchStartRelay (evt) {
-       // console.log("AUFG!");
         var e = evt || window.event;
         multiverse.cancelevent(e);
         currentTouchStartFunction(e);
-        if(boggedDownTimer === null) {
-            boggedDownTimer = setTimeout(releasetheBastard, 1000);
-            grabDate = new Date();
-        }
-        grabbed = true;
-        //boggedDownTimer = setTimeout(releasetheBastard, 1000);
     }
 
     function touchMoveRelay (evt) {
@@ -1757,12 +1658,6 @@ scientist_falling.initialize = function () {
 
     function touchEndRelay (evt) {
         var e = evt || window.event;
-        if(boggedDownTimer !== null) {
-            clearTimeout(boggedDownTimer);
-            boggedDownTimer = null;
-        }
-        boggedDown = false;
-        grabbed = false;
     }
 
     function sizeCanvas (ww,hh) {
@@ -1792,11 +1687,6 @@ scientist_falling.initialize = function () {
         canvas.height = canvasheight;
         canvas.width = canvaswidth;
 
-        /*emptyBar.style.top = (canvasheight * 0.13) + 'px';
-        emptyBar.style.left = 22 + 'px';
-        fullBar.style.top = (canvasheight * 0.13) + 'px';
-        fullBar.style.left = 22 + 'px';
-        mutationText.style.top = ((canvasheight * 0.13) + 8) + 'px';*/
         cameraTarget = canvasheight * targetRatio;
         tubeResetFunction();
     }
@@ -1919,7 +1809,7 @@ scientist_falling.initialize = function () {
         tetherY = canvasheight* 0.6;
         createRagDoll((canvaswidth*0.5), (canvasheight* 0.6) );
        // anchor = tether(head.body, tetherX, tetherY-60, 4, true);
-        anchor = tether(head.body, tetherX, tetherY-10, 4, true);
+        anchor = tether(head.body, tetherX, tetherY-20, 4, true);
     }
 
     function setUpMadScientistRagDoll () {
@@ -2019,44 +1909,33 @@ scientist_falling.initialize = function () {
                      bodyB.parentObj.destroy = true;
                     if(bodyB.parentObj.isDNA === true) {
                         humanize();
-                       // return;
                     } else if (bodyB.parentObj.isVirus === true) {
                         dehumanize();
-                        //return;
+                        
                     } else if (bodyB.parentObj.isEbola === true) {
                         fullMutation();
-                        //return;
                     } else if (bodyB.parentObj.isSuperPill === true) {
                         fullHumanization();
-                       // return;
                     } else if (bodyB.parentObj.isPowerUp === true ) {
                         ironManPower = true;
                         flickerCounter = 0;
-                        //return;
                     }
-                   // bodyB.parentObj.destroy = true;
                 }
             } else if (bodyB.parentObj.isMan === true && bodyA.parentObj.isMan !== true) {
                 if(bodyA.parentObj.destroy!== true) {
                       bodyA.parentObj.destroy = true;
                     if(bodyA.parentObj.isDNA === true) {
                         humanize();
-                         return;
                     } else if (bodyA.parentObj.isVirus === true) {
                         dehumanize();
-                         return;
                     } else if (bodyA.parentObj.isEbola === true) {
                         fullMutation();
-                         return;
                     } else if (bodyA.parentObj.isSuperPill === true) {
                         fullHumanization();
-                         return;
-                    } else if (bodyA.parentObj.isPowerUp === true ) {
+                    } else; if (bodyA.parentObj.isPowerUp === true ) {
                         ironManPower = true;
-                        flickerCounter = 0;
-                         return;
+                        flickerCounter = 0
                     }
-                  
                 }
             }
         };
@@ -2071,22 +1950,19 @@ scientist_falling.initialize = function () {
             var bodyA = contact.GetFixtureA().GetBody(),
             bodyB = contact.GetFixtureB().GetBody();
 
-            if(ironManPower === true ) { return false; }
-            if(bodyA.parentObj.isMan === true && bodyB.parentObj.isMan !== true) {
+            if(bodyB.parentObj.isMan !== true && bodyA.parentObj.isMan === true ) {
                 if(bodyB.parentObj.destroy!== true) {
-                    if(bodyB.parentObj.isDNA === true) {
-                        humanize();
-                    } else if (bodyB.parentObj.isVirus === true) {
+                    if (bodyB.parentObj.isVirus === true) {
                         dehumanize();
+                        preschool = false;
                     } 
                     bodyB.parentObj.destroy = true;
                 }
-            } else if (bodyB.parentObj.isMan === true && bodyA.parentObj.isMan !== true) {
-                if(bodyA.parentObj.destroy!== true) {
-                    if(bodyA.parentObj.isDNA === true) {
-                        humanize();
-                    } else if (bodyA.parentObj.isVirus === true) {
+            } else if (bodyA.parentObj.isMan !== true && bodyB.parentObj.isMan === true) {
+                 if(bodyA.parentObj.destroy!== true) {
+                    if (bodyA.parentObj.isVirus === true) {
                         dehumanize();
+                        preschool = false;
                     } 
                     bodyA.parentObj.destroy = true;
                 }
@@ -2113,14 +1989,12 @@ scientist_falling.initialize = function () {
 
         directionVector = x - fingerStartPos;
         yPos = scientist[1].body.GetPosition().y;
-        if(boggedDown === false) {
+       
             //anchor.body.SetPosition(new B2Vec2(x/scale,yPos));
-            anchor.body.ApplyImpulse(new B2Vec2(directionVector*0.3,0), anchor.body.GetWorldCenter());
+            anchor.body.ApplyImpulse(new B2Vec2(directionVector*0.3,motor.y), anchor.body.GetWorldCenter());
            /// motor.x = (directionVector * 0.1);
-        }
        
         multiverse.cancelevent(e);
-        //ui.moveSlider(x);
     }
 
     function setFingerPos (evt) {
@@ -2181,6 +2055,14 @@ scientist_falling.initialize = function () {
     brokenFunction = function () {
         //do nothing!
     };
+
+    function savebtn_relay () {
+        currentsavebtnfunction();
+    }
+
+    function resetbtn_relay  ( ) {
+        currentresetbtnfunction();
+    }
 
     function cleanHouse () {
         var limbname = '',
@@ -2276,7 +2158,6 @@ scientist_falling.initialize = function () {
     });
 
     function setUpButtons () {
-        console.log('setting up buttons');
         //splash screen
         multiverse.eventlistener('touchstart',beginexperiment_btn, function(){
             //removeMenus();
@@ -2284,6 +2165,8 @@ scientist_falling.initialize = function () {
             splashScreen.elem.style.visibility  = 'hidden';
             rviPopUp.targetAlpha = 1;
             rviPopUp.elem.style.visibility = "visible";
+              document.body.style.background = "url('images/tile.jpg')";
+                mainMenu.elem.style.background = "url('images/tile.jpg')";
         });
         //end screen
         multiverse.eventlistener('touchstart',playagain_btn, function(){
@@ -2324,10 +2207,6 @@ scientist_falling.initialize = function () {
         });
         //success screen
         multiverse.eventlistener('touchstart', gotomulti_btn, function(){
-           // currentSubScreen.elem.style.left = '-9999px';
-            //removeMenus();
-            //selectGameState('mad-scientist');
-            //selectMenuScreen('multi');
             successScreen.targetAlpha = 0;
             msiPopUp.targetAlpha = 1;
             msiPopUp.elem.style.visibility = "visible";
@@ -2351,22 +2230,8 @@ scientist_falling.initialize = function () {
             sharePopUp.targetAlpha = 0;
         } );
 
-
-        /*multiverse.eventlistener('touchend', rviShade, function(){
-            rviPopUp.elem.style.visibility = "hidden";
-            sharePopUp.targetAlpha = 0;
-        } );
-        multiverse.eventlistener('touchend', msiShade, function(){
-            msiPopUp.elem.style.visibility = "hidden";
-            sharePopUp.targetAlpha = 0;
-        } ); */
-
-
-        //ms success
-        /*multiverse.eventlistener('touchstart', mscontinue_btn, function() {
-            removeMenus();
-            selectMenuScreen('multi');
-        });*/
+       multiverse.eventlistener('touchstart', reset_btn, resetbtn_relay );
+       multiverse.eventlistener('touchstart', save_btn, savebtn_relay);
 
         multiverse.eventlistener('touchstart', twitter_btn, shareOnTwitter );
         multiverse.eventlistener('touchstart', facebook_btn, shareOnFacebook );
