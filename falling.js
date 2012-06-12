@@ -138,7 +138,6 @@ scientist_falling.initialize = function () {
     gotomulti_btn = document.getElementById('gotomultichoice'),
     //shared screen 
     gotosplash_btn = document.getElementById('gotogame'),
-    //mscontinue_btn = document.getElementById('ms-continue'),
     closeShare_btn = document.getElementById('close-share'),
     shareShade = document.getElementById('share-shade'),
     twitter_btn = document.getElementById('twitter-share'),
@@ -202,10 +201,6 @@ scientist_falling.initialize = function () {
     queryString = '',
     ironMan = {},
     ironManPower = false,
-    boggedDown = false,
-    boggedDownTimer = null,
-    grabDate = 0,
-    grabbed = false,
     currentresetbtnfunction = function () {},
     currentsavebtnfunction = function () {},
     preschool = false;
@@ -226,10 +221,10 @@ scientist_falling.initialize = function () {
         FB.ui({
             method : 'feed',
             name : 'retrovirus',
-            caption : 'I made this awesome mutant!',
+            caption : 'Check out this mutant I made in Retro Virus!',
             description : 'Keep Dr. Nano in one piece until he can escape the experiment.',
             link : thelink,
-            picture : 'http://iphone.stonecanoe.ca/falling/images/falling_nano.png'
+            picture : 'http://iphone.stonecanoe.ca/falling/images/fb_share.jpg'
         }, function(response){
            // console.log('response: ' + response);
         } );
@@ -308,7 +303,6 @@ scientist_falling.initialize = function () {
         world = new B2World( new B2Vec2(0,0)/*gravity*/ , false/*allow sleep*/);
         setUpMadScientistRagDoll();
         setUpDNA();
-        //dnaTimer = setTimeout(fireDNA, Math.random()* 4000 + 4000);
         setUpMadAmoebas();
         currentAcceleromterFunction = fancyGravity;
         currentTouchStartFunction = dropAmoeba;
@@ -1574,29 +1568,6 @@ scientist_falling.initialize = function () {
         amoebas.push(pu);
     }
 
-    function fireDNA () {
-        var xPos,
-        yPos,
-        pill = {},
-        vx = 0,
-        vy = 0;
-
-        if(percentageofHumanDNA > 0) {
-            xPos = (Math.random() * canvaswidth) / scale;
-            yPos = (canvasheight) / scale;
-            vx = (scientistXPos - xPos) * 10;
-            vy = (scientistYPos - yPos) * 10;
-            pill = makePill(xPos,yPos);
-            pill.isDNA = true;
-            pill.image = pillImage;
-            pill.body.ApplyImpulse(new B2Vec2(vx,vy), pill.body.GetWorldCenter() );
-            DNApills.push(pill);
-
-        }
-
-        dnaTimer = setTimeout(fireDNA, Math.random() * 4000 + 4000);
-    }
-
     function makePill (x,y) {
         var pill = {},
         widf = 44,
@@ -2257,7 +2228,6 @@ scientist_falling.initialize = function () {
 
     multiverse.eventlistener('touchmove', mainMenu.elem, noScroll);
   
-
 };
 
 multiverse.eventlistener('load', window, scientist_falling.initialize);
