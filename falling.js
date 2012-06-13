@@ -2228,6 +2228,6 @@ scientist_falling.initialize = function () {
 
     multiverse.eventlistener('touchmove', mainMenu.elem, noScroll);
   
-};
+}; //test
 
 multiverse.eventlistener('load', window, scientist_falling.initialize);
